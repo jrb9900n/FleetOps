@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import Assets from './components/Assets';
 import { LogMaintenance, ReportDamage, Invoices } from './components/Forms';
+import { PublicLogMaintenance, PublicReportDamage } from './components/PublicForms';
 import { History, Costs, PMSchedules } from './components/Pages';
 import Users from './components/Users';
 import { Icon, ROLE_LABELS } from './components/ui';
@@ -34,14 +35,20 @@ const mobileNavStyles = `
 
 function CompanyLogo({ size='normal' }) {
   const s = size==='small';
-  if (LOGO_URL) {
-    return <img src={LOGO_URL} alt={COMPANY_NAME} style={{height:s?28:36,width:'auto',objectFit:'contain'}}/>;
-  }
+  if (LOGO_URL) return <img src={LOGO_URL} alt={COMPANY_NAME} style={{height:s?28:36,width:'auto',objectFit:'contain'}}/>;
   return (
     <div style={{width:s?32:40,height:s?32:40,background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:s?8:10,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:s?12:14,color:'#fff',letterSpacing:-0.5,flexShrink:0}}>
       {COMPANY_SHORT.slice(0,3)}
     </div>
   );
+}
+
+// ── Public route detection (no router dependency needed) ─────────────────────
+function getPublicRoute() {
+  const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
+  if (path === '/log') return 'log';
+  if (path === '/damage') return 'damage';
+  return null;
 }
 
 function AppShell() {
@@ -102,7 +109,28 @@ function AppShell() {
             </button>
           ))}
         </nav>
-        <div style={{padding:'12px 14px',borderTop:'1px solid #e5e7eb'}}>
+
+        {/* QR code quick-access links */}
+        <div style={{padding:'12px 14px',borderTop:'1px solid #e5e7eb',borderBottom:'1px solid #e5e7eb'}}>
+          <div style={{fontSize:10,fontWeight:600,color:'#9ca3af',letterSpacing:1,textTransform:'uppercase',marginBottom:8}}>Public QR Links</div>
+          {[
+            {path:'/log',label:'Log Maintenance',color:'#f97316'},
+            {path:'/damage',label:'Report Damage',color:'#ef4444'},
+          ].map(({path,label,color})=>(
+            <div key={path} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+              <span style={{fontSize:11.5,color:'#374151',fontWeight:500}}>{label}</span>
+              <button
+                onClick={()=>{ const url=window.location.origin+path; navigator.clipboard?.writeText(url); alert('Copied: '+url); }}
+                title={'Copy link: '+window.location.origin+path}
+                style={{fontSize:10,color,background:color+'11',border:`1px solid ${color}33`,borderRadius:4,padding:'2px 7px',cursor:'pointer',fontFamily:'inherit',fontWeight:600}}
+              >
+                Copy URL
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div style={{padding:'12px 14px'}}>
           <div style={{fontSize:12,fontWeight:600,color:'#111827',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{profile?.full_name||user.email}</div>
           <div style={{marginBottom:8}}>
             <span style={{display:'inline-block',padding:'2px 7px',borderRadius:4,fontSize:10,fontWeight:700,letterSpacing:.5,background:(ROLE_COLORS[profile?.role]||'#64748b')+'22',color:ROLE_COLORS[profile?.role]||'#6b7280',border:`1px solid ${(ROLE_COLORS[profile?.role]||'#64748b')}44`}}>
@@ -156,6 +184,11 @@ function AppShell() {
 }
 
 export default function App() {
+  // Check for public routes BEFORE rendering auth
+  const publicRoute = getPublicRoute();
+  if (publicRoute === 'log') return <PublicLogMaintenance/>;
+  if (publicRoute === 'damage') return <PublicReportDamage/>;
+
   return (
     <AuthProvider>
       <AppShell/>
