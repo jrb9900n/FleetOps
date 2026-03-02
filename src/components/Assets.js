@@ -163,7 +163,7 @@ function AssetDetail({ asset, onClose, onEdit, canEdit }) {
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
             <Field label="Task Title *" fullWidth><input style={inputStyle} {...ef('title')}/></Field>
             <Field label="Date"><input type="date" style={inputStyle} {...ef('date')}/></Field>
-            <Field label="Type"><select style={selectStyle} {...ef('type')}><option value="preventive">Preventive Maintenance</option><option value="corrective">Corrective Repair</option><option value="inspection">Inspection</option><option value="damage_repair">Damage Repair</option><option value="other">Other</option></select></Field>
+            <Field label="Type"><select style={selectStyle} {...ef('type')}><option value="inspection">Inspection</option><option value="preventive">Preventative Maintenance</option><option value="corrective">Corrective Repair</option><option value="damage_repair">Damage Repair</option><option value="other">Other</option></select></Field>
             <Field label="Performed By"><input style={inputStyle} {...ef('performed_by')}/></Field>
             <Field label="Vendor / Shop"><input style={inputStyle} {...ef('vendor')}/></Field>
             <Field label="Odometer / Hours"><input style={inputStyle} {...ef('odometer')}/></Field>
