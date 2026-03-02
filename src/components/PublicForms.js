@@ -121,16 +121,26 @@ export function PublicLogMaintenance() {
   const submit = async () => {
     if (!form.asset_id || !form.title) return show('Please select an asset and enter a task title','error');
     setSaving(true);
-    const { error } = await supabase.from('maintenance_logs').insert({
+    const { data: inserted, error } = await supabase.from('maintenance_logs').insert({
       ...form,
       internal_hours: form.internal_hours ? Number(form.internal_hours) : 0,
       external_cost: form.external_cost ? Number(form.external_cost) : 0,
       receipt_path: uploadedFile?.path||null,
       receipt_name: uploadedFile?.name||null,
       created_by: null,
-    });
+    }).select().single();
     setSaving(false);
     if (error) return show(error.message,'error');
+    // Update odometer if provided
+    if (form.odometer) {
+      const { data: existing } = await supabase.from('assets').select('odometer_date').eq('id',form.asset_id).single();
+      const existDate = existing?.odometer_date ? new Date(existing.odometer_date) : new Date(0);
+      const newDate = form.date ? new Date(form.date) : new Date();
+      if (newDate >= existDate) {
+        await supabase.from('assets').update({ odometer: form.odometer, odometer_date: form.date || new Date().toISOString().split('T')[0] }).eq('id', form.asset_id);
+      }
+    }
+    await supabase.from('asset_audit').insert({ asset_id: form.asset_id, event_type: 'maintenance_log', event_id: inserted?.id||null, changed_by: form.performed_by || 'Public Form', summary: `Maintenance logged (public form): "${form.title}"`, fields: { type: form.type, odometer: form.odometer||null } });
     setSubmitted(true);
   };
 
@@ -230,11 +240,12 @@ export function PublicReportDamage() {
   const submit = async () => {
     if (!form.asset_id || !form.description) return show('Please select an asset and describe the damage','error');
     setSaving(true);
-    const { error } = await supabase.from('damage_reports').insert({
+    const { data: inserted, error } = await supabase.from('damage_reports').insert({
       ...form, status:'open', created_by:null,
-    });
+    }).select().single();
     setSaving(false);
     if (error) return show(error.message,'error');
+    await supabase.from('asset_audit').insert({ asset_id: form.asset_id, event_type: 'damage_report', event_id: inserted?.id||null, changed_by: form.reported_by || 'Public Form', summary: `Damage reported (public form): ${form.severity} severity — "${form.description?.slice(0,60)}"`, fields: { severity: form.severity, location: form.location||null, status: 'open' } });
     setSubmitted(true);
   };
 
