@@ -230,7 +230,7 @@ export function PublicReportDamage() {
   const [saving, setSaving] = useState(false);
   const { toast, show } = useToast();
 
-  const blank = { asset_id:'', date:today(), reported_by:'', severity:'minor', description:'', location:'', action_taken:'' };
+  const blank = { asset_id:'', date:today(), reported_by:'', severity:'minor', description:'', location:'', action_taken:'', odometer:'' };
   const [form, setForm] = useState(blank);
 
   useEffect(()=>{
@@ -245,7 +245,15 @@ export function PublicReportDamage() {
     }).select().single();
     setSaving(false);
     if (error) return show(error.message,'error');
-    await supabase.from('asset_audit').insert({ asset_id: form.asset_id, event_type: 'damage_report', event_id: inserted?.id||null, changed_by: form.reported_by || 'Public Form', summary: `Damage reported (public form): ${form.severity} severity — "${form.description?.slice(0,60)}"`, fields: { severity: form.severity, location: form.location||null, status: 'open' } });
+    if (form.odometer) {
+      const { data: existing } = await supabase.from('assets').select('odometer_date').eq('id',form.asset_id).single();
+      const existDate = existing?.odometer_date ? new Date(existing.odometer_date) : new Date(0);
+      const newDate = form.date ? new Date(form.date) : new Date();
+      if (newDate >= existDate) {
+        await supabase.from('assets').update({ odometer: form.odometer, odometer_date: form.date || new Date().toISOString().split('T')[0] }).eq('id', form.asset_id);
+      }
+    }
+    await supabase.from('asset_audit').insert({ asset_id: form.asset_id, event_type: 'damage_report', event_id: inserted?.id||null, changed_by: form.reported_by || 'Public Form', summary: `Damage reported (public form): ${form.severity} severity — "${form.description?.slice(0,60)}"`, fields: { severity: form.severity, location: form.location||null, odometer: form.odometer||null, status: 'open' } });
     setSubmitted(true);
   };
 
@@ -308,6 +316,9 @@ export function PublicReportDamage() {
             </Field>
             <Field label="Immediate Action Taken">
               <input style={inputStyle} {...f('action_taken')} placeholder="e.g. Equipment parked, tag placed…"/>
+            </Field>
+            <Field label="Odometer / Engine Hours">
+              <input style={inputStyle} {...f('odometer')} placeholder="e.g. 45,200 mi or 1,340 hrs"/>
             </Field>
             <Field label="Description *" fullWidth>
               <textarea style={{...inputStyle,height:110,resize:'vertical'}} {...f('description')} placeholder="Describe the damage in detail — what you saw, when it happened, how severe it appears…"/>
