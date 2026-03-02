@@ -101,7 +101,11 @@ export function PublicLogMaintenance() {
   const [form, setForm] = useState(blank);
 
   useEffect(()=>{
-    supabase.from('assets').select('id,name').order('id').then(({data})=>setAssets(data||[]));
+    supabase.from('assets').select('id,name').order('id')
+      .then(({data, error})=>{
+        if (error) { console.error('Assets fetch error:', error); show('Could not load asset list: '+error.message, 'error'); }
+        else setAssets(data||[]);
+      });
   },[]);
 
   const handleFile = async (e) => {
