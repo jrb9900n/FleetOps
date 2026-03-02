@@ -1,7 +1,7 @@
 // ── Shared UI components ────────────────────────────────────────────────────
 import { useState } from 'react';
 
-export const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+export const fmtDate = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
 export const fmtCurrency = (n) => n != null ? `$${Number(n).toLocaleString('en-US',{minimumFractionDigits:2})}` : '—';
 export const today = () => new Date().toISOString().split('T')[0];
 
