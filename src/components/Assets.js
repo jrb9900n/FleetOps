@@ -10,17 +10,17 @@ const CONDITION_COLORS = {
 
 export default function Assets() {
   const { can } = useAuth();
-  const [assets, setAssets]   = useState([]);
+  const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch]   = useState('');
+  const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('all');
   const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId]   = useState(null);
+  const [editId, setEditId] = useState(null);
   const [sortCol, setSortCol] = useState('id');
   const [sortDir, setSortDir] = useState('asc');
   const { toast, show } = useToast();
 
-  const blank = { id:'', name:'', category:'asphalt', type:'truck', year:'', make:'', model:'', status:'active', condition:'Good', odometer:'', comments:'' };
+  const blank = { id:'', name:'', category:'asphalt', type:'truck', year:'', make:'', model:'', status:'active', condition:'Good', odometer:'', odometer_date:'', comments:'' };
   const [form, setForm] = useState(blank);
 
   useEffect(()=>{ load(); },[]);
@@ -31,19 +31,23 @@ export default function Assets() {
     setLoading(false);
   };
 
-  const openNew  = () => { setForm(blank); setEditId(null); setShowForm(true); };
+  const openNew = () => { setForm(blank); setEditId(null); setShowForm(true); };
+
   const openEdit = (a) => {
-    // Map notes field → comments if needed for legacy records
-    setForm({ ...blank, ...a, comments: a.comments || a.notes || '' });
+    setForm({ ...blank, ...a, comments: a.comments || a.notes || '', odometer_date: a.odometer_date || '' });
     setEditId(a.id);
     setShowForm(true);
   };
 
   const save = async () => {
     if (!form.id||!form.name) return show('Asset ID and Name are required','error');
-    const payload = { id:form.id, name:form.name, category:form.category, type:form.type,
+    const payload = {
+      id:form.id, name:form.name, category:form.category, type:form.type,
       year:form.year, make:form.make, model:form.model, status:form.status,
-      condition:form.condition, odometer:form.odometer, comments:form.comments };
+      condition:form.condition, odometer:form.odometer,
+      odometer_date: form.odometer_date || null,
+      comments:form.comments
+    };
     if (editId) {
       const { error } = await supabase.from('assets').update(payload).eq('id',editId);
       if (error) return show(error.message,'error');
@@ -70,8 +74,7 @@ export default function Assets() {
   };
 
   const filtered = assets
-    .filter(a =>
-      (filterCat==='all'||a.category===filterCat) &&
+    .filter(a => (filterCat==='all'||a.category===filterCat) &&
       (a.id.toLowerCase().includes(search.toLowerCase())||
        a.name.toLowerCase().includes(search.toLowerCase())||
        (a.make||'').toLowerCase().includes(search.toLowerCase()))
@@ -100,8 +103,11 @@ export default function Assets() {
 
   return (
     <div style={{padding:32, background:'#f9fafb', minHeight:'100vh'}}>
-      <PageHeader title="Assets" subtitle={`${assets.length} assets registered`}
-        action={can('assets') && <Btn icon="plus" onClick={openNew}>Add Asset</Btn>}/>
+      <PageHeader
+        title="Assets"
+        subtitle={`${assets.length} assets registered`}
+        action={can('assets') && <Btn icon="plus" onClick={openNew}>Add Asset</Btn>}
+      />
 
       <div style={{display:'flex',gap:12,marginBottom:20,flexWrap:'wrap'}}>
         <div style={{position:'relative',flex:'1 1 200px'}}>
@@ -146,7 +152,10 @@ export default function Assets() {
                     ? <Badge text={a.condition} color={CONDITION_COLORS[a.condition]||'#64748b'}/>
                     : <span style={{color:'#d1d5db'}}>—</span>}
                 </td>
-                <td style={{padding:'12px 16px',color:'#6b7280',fontFamily:"'DM Mono',monospace",fontSize:12}}>{a.odometer||'—'}</td>
+                <td style={{padding:'12px 16px',color:'#6b7280'}}>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:12}}>{a.odometer||'—'}</div>
+                  {a.odometer_date && <div style={{fontSize:11,color:'#9ca3af',marginTop:2}}>as of {fmtDate(a.odometer_date)}</div>}
+                </td>
                 <td style={{padding:'12px 16px'}}>
                   <span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:12,fontWeight:500,color:STATUS_COLORS[a.status||'active']||'#16a34a'}}>
                     <span style={{width:6,height:6,borderRadius:'50%',background:STATUS_COLORS[a.status||'active'],display:'inline-block'}}/>
@@ -170,8 +179,12 @@ export default function Assets() {
       {showForm && (
         <Modal title={editId?'Edit Asset':'Add New Asset'} onClose={()=>setShowForm(false)}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
-            <Field label="Asset ID *"><input style={inputStyle} value={form.id} onChange={e=>setForm(p=>({...p,id:e.target.value}))} placeholder="e.g. FLV004" disabled={!!editId}/></Field>
-            <Field label="Name *"><input style={inputStyle} value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/></Field>
+            <Field label="Asset ID *">
+              <input style={inputStyle} value={form.id} onChange={e=>setForm(p=>({...p,id:e.target.value}))} placeholder="e.g. FLV004" disabled={!!editId}/>
+            </Field>
+            <Field label="Name *">
+              <input style={inputStyle} value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/>
+            </Field>
             <Field label="Category">
               <select style={selectStyle} value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))}>
                 {CATEGORIES.map(c=><option key={c} value={c}>{c.charAt(0).toUpperCase()+c.slice(1)}</option>)}
@@ -182,9 +195,15 @@ export default function Assets() {
                 {ASSET_TYPES.map(t=><option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
               </select>
             </Field>
-            <Field label="Year"><input style={inputStyle} value={form.year} onChange={e=>setForm(p=>({...p,year:e.target.value}))} placeholder="2022"/></Field>
-            <Field label="Make"><input style={inputStyle} value={form.make} onChange={e=>setForm(p=>({...p,make:e.target.value}))}/></Field>
-            <Field label="Model"><input style={inputStyle} value={form.model} onChange={e=>setForm(p=>({...p,model:e.target.value}))}/></Field>
+            <Field label="Year">
+              <input style={inputStyle} value={form.year} onChange={e=>setForm(p=>({...p,year:e.target.value}))} placeholder="2022"/>
+            </Field>
+            <Field label="Make">
+              <input style={inputStyle} value={form.make} onChange={e=>setForm(p=>({...p,make:e.target.value}))}/>
+            </Field>
+            <Field label="Model">
+              <input style={inputStyle} value={form.model} onChange={e=>setForm(p=>({...p,model:e.target.value}))}/>
+            </Field>
             <Field label="Status">
               <select style={selectStyle} value={form.status||'active'} onChange={e=>setForm(p=>({...p,status:e.target.value}))}>
                 <option value="active">Active</option>
@@ -198,8 +217,15 @@ export default function Assets() {
                 {CONDITIONS.map(c=><option key={c} value={c}>{c}</option>)}
               </select>
             </Field>
-            <Field label="Odometer / Engine Hours"><input style={inputStyle} value={form.odometer||''} onChange={e=>setForm(p=>({...p,odometer:e.target.value}))} placeholder="e.g. 45,200 mi or 1,340 hrs"/></Field>
-            <Field label="Comments" fullWidth><textarea style={{...inputStyle,height:80,resize:'vertical'}} value={form.comments||''} onChange={e=>setForm(p=>({...p,comments:e.target.value}))} placeholder="Known issues, notes, follow-up needed…"/></Field>
+            <Field label="Odometer / Engine Hours">
+              <input style={inputStyle} value={form.odometer||''} onChange={e=>setForm(p=>({...p,odometer:e.target.value}))} placeholder="e.g. 45,200 mi or 1,340 hrs"/>
+            </Field>
+            <Field label="Reading As-Of Date">
+              <input type="date" style={inputStyle} value={form.odometer_date||''} onChange={e=>setForm(p=>({...p,odometer_date:e.target.value}))}/>
+            </Field>
+            <Field label="Comments" fullWidth>
+              <textarea style={{...inputStyle,height:80,resize:'vertical'}} value={form.comments||''} onChange={e=>setForm(p=>({...p,comments:e.target.value}))} placeholder="Known issues, notes, follow-up needed…"/>
+            </Field>
           </div>
           <div style={{display:'flex',justifyContent:'flex-end',gap:10,marginTop:20}}>
             <GhostBtn onClick={()=>setShowForm(false)}>Cancel</GhostBtn>
