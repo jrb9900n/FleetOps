@@ -45,12 +45,23 @@ export function LogMaintenance() {
 
   const submit = async () => {
     if (!form.asset_id || !form.title) return show('Asset and title are required','error');
-    const { error } = await supabase.from('maintenance_logs').insert({
+    const { data: inserted, error } = await supabase.from('maintenance_logs').insert({
       ...form, internal_hours: form.internal_hours ? Number(form.internal_hours) : 0,
       external_cost: form.external_cost ? Number(form.external_cost) : 0,
       receipt_path: uploadedFile?.path||null, receipt_name: uploadedFile?.name||null, created_by: user.id,
-    });
+    }).select().single();
     if (error) return show(error.message,'error');
+    // Update odometer on asset if provided and reading is more recent
+    if (form.odometer) {
+      const { data: existing } = await supabase.from('assets').select('odometer_date').eq('id',form.asset_id).single();
+      const existDate = existing?.odometer_date ? new Date(existing.odometer_date) : new Date(0);
+      const newDate = form.date ? new Date(form.date) : new Date();
+      if (newDate >= existDate) {
+        await supabase.from('assets').update({ odometer: form.odometer, odometer_date: form.date || new Date().toISOString().split('T')[0] }).eq('id', form.asset_id);
+      }
+    }
+    // Write audit entry
+    await supabase.from('asset_audit').insert({ asset_id: form.asset_id, event_type: 'maintenance_log', event_id: inserted?.id||null, changed_by: form.performed_by || user.email || 'Staff', summary: `Maintenance logged: "${form.title}"`, fields: { type: form.type, odometer: form.odometer||null, cost: form.external_cost||null } });
     show('Maintenance log saved'); setForm(blank); setUploadedFile(null);
     setSubmitted(true); setTimeout(()=>setSubmitted(false), 2500);
   };
@@ -131,8 +142,10 @@ export function ReportDamage() {
 
   const submit = async () => {
     if (!form.asset_id || !form.description) return show('Asset and description are required','error');
-    const { error } = await supabase.from('damage_reports').insert({...form, status:'open', created_by:user.id});
+    const { data: inserted, error } = await supabase.from('damage_reports').insert({...form, status:'open', created_by:user.id}).select().single();
     if (error) return show(error.message,'error');
+    // Write audit entry
+    await supabase.from('asset_audit').insert({ asset_id: form.asset_id, event_type: 'damage_report', event_id: inserted?.id||null, changed_by: form.reported_by || user.email || 'Staff', summary: `Damage reported: ${form.severity} severity — "${form.description?.slice(0,60)}"`, fields: { severity: form.severity, location: form.location||null, status: 'open' } });
     show('Damage report submitted'); setForm(blank); setViewMode('reports'); setReportSection('open'); loadReports();
   };
 
