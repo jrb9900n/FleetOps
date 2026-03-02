@@ -139,7 +139,7 @@ function AssetDetail({ asset: initialAsset, onClose, onEdit, canEdit, currentUse
               ['Year / Make / Model', <span style={{ fontSize: 13, color: '#374151' }}>{[asset.year, asset.make, asset.model].filter(Boolean).join(' ') || '—'}</span>],
               ['Condition', asset.condition ? <Badge text={asset.condition} color={CONDITION_COLORS[asset.condition] || '#64748b'} /> : <span style={{ color: '#d1d5db' }}>—</span>],
               ['Status', <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 500, color: STATUS_COLORS[asset.status || 'active'] }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: STATUS_COLORS[asset.status || 'active'], display: 'inline-block' }} />{(asset.status || 'active').toUpperCase()}</span>],
-              ['Odometer / Hours', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#374151' }}>{asset.odometer || '—'}{asset.odometer_date && <span style={{ display: 'block', fontSize: 10, color: '#9ca3af' }}>as of {fmtDate(asset.odometer_date)}</span>}</span>],
+              ['Odometer / Hours', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#374151' }}>{asset.odometer || '—'}<span style={{ display: 'block', fontSize: 10, color: asset.odometer_date ? '#9ca3af' : '#d1d5db', marginTop: 2 }}>{asset.odometer_date ? `as of ${fmtDate(asset.odometer_date)}` : 'no date recorded'}</span></span>],
               ['Serial / VIN', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#374151' }}>{asset.vin || '—'}</span>],
             ].map(([label, value]) => (
               <div key={label}>
