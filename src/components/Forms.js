@@ -73,9 +73,9 @@ export function LogMaintenance() {
           <Field label="Task Title *" fullWidth><input style={inputStyle} {...f('title')} placeholder="e.g. Oil change, tire rotation, hydraulic repair…"/></Field>
           <Field label="Type">
             <select style={selectStyle} {...f('type')}>
-              <option value="preventive">Preventive Maintenance</option>
-              <option value="corrective">Corrective Repair</option>
               <option value="inspection">Inspection</option>
+              <option value="preventive">Preventative Maintenance</option>
+              <option value="corrective">Corrective Repair</option>
               <option value="damage_repair">Damage Repair</option>
               <option value="other">Other</option>
             </select>
