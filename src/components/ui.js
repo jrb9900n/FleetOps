@@ -6,7 +6,7 @@ export const fmtCurrency = (n) => n != null ? `$${Number(n).toLocaleString('en-U
 export const today = () => new Date().toISOString().split('T')[0];
 
 export const CATEGORIES   = ['asphalt','concrete','landscape','general','fleet','safety'];
-export const ASSET_TYPES  = ['truck','trailer','excavator','skid steer','mower','blower','trimmer','hand tool','equipment','other'];
+export const ASSET_TYPES  = ['Vehicle','Trailer','Vehicle Attachment','Heavy Equipment','Ride On Machine','Small Engine','Skid Attachment','Hand Tool','Landscape Tool','Other'];
 export const PM_INTERVALS = ['weekly','monthly','quarterly','semi-annual','annual','every 250hrs','every 500hrs','every 1000hrs','every 5000mi','every 10000mi'];
 export const CONDITIONS   = ['Excellent','Good','Fair','Poor','Out of Service'];
 
