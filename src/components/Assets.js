@@ -20,7 +20,7 @@ export default function Assets() {
   const [sortDir, setSortDir] = useState('asc');
   const { toast, show } = useToast();
 
-  const blank = { id:'', name:'', category:'asphalt', type:'truck', year:'', make:'', model:'', status:'active', condition:'Good', odometer:'', odometer_date:'', comments:'' };
+  const blank = { id:'', name:'', category:'asphalt', type:'truck', year:'', make:'', model:'', status:'active', condition:'Good', odometer:'', odometer_date:'', vin:'', comments:'' };
   const [form, setForm] = useState(blank);
 
   useEffect(()=>{ load(); },[]);
@@ -34,7 +34,7 @@ export default function Assets() {
   const openNew = () => { setForm(blank); setEditId(null); setShowForm(true); };
 
   const openEdit = (a) => {
-    setForm({ ...blank, ...a, comments: a.comments || a.notes || '', odometer_date: a.odometer_date || '' });
+    setForm({ ...blank, ...a, comments: a.comments || a.notes || '', odometer_date: a.odometer_date || '', vin: a.vin || '' });
     setEditId(a.id);
     setShowForm(true);
   };
@@ -46,6 +46,7 @@ export default function Assets() {
       year:form.year, make:form.make, model:form.model, status:form.status,
       condition:form.condition, odometer:form.odometer,
       odometer_date: form.odometer_date || null,
+      vin: form.vin || null,
       comments:form.comments
     };
     if (editId) {
@@ -126,7 +127,7 @@ export default function Assets() {
             <tr style={{borderBottom:'1px solid #e5e7eb'}}>
               {[
                 ['id','Asset ID'],['name','Name'],['category','Category'],['type','Type'],
-                ['year','Year / Make / Model'],['condition','Condition'],['odometer','Odometer / Hours'],['status','Status'],
+                ['year','Year / Make / Model'],['condition','Condition'],['odometer','Odometer / Hours'],['vin','Serial / VIN'],['status','Status'],
               ].map(([col,label])=>(
                 <th key={col} style={thStyle(col)} onClick={()=>handleSort(col)}>
                   <span style={{display:'inline-flex',alignItems:'center',gap:4}}>{label}<SortIcon col={col}/></span>
@@ -156,6 +157,7 @@ export default function Assets() {
                   <div style={{fontFamily:"'DM Mono',monospace",fontSize:12}}>{a.odometer||'—'}</div>
                   {a.odometer_date && <div style={{fontSize:11,color:'#9ca3af',marginTop:2}}>as of {fmtDate(a.odometer_date)}</div>}
                 </td>
+                <td style={{padding:'12px 16px',color:'#6b7280',fontFamily:"'DM Mono',monospace",fontSize:12}}>{a.vin||'—'}</td>
                 <td style={{padding:'12px 16px'}}>
                   <span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:12,fontWeight:500,color:STATUS_COLORS[a.status||'active']||'#16a34a'}}>
                     <span style={{width:6,height:6,borderRadius:'50%',background:STATUS_COLORS[a.status||'active'],display:'inline-block'}}/>
@@ -222,6 +224,9 @@ export default function Assets() {
             </Field>
             <Field label="Reading As-Of Date">
               <input type="date" style={inputStyle} value={form.odometer_date||''} onChange={e=>setForm(p=>({...p,odometer_date:e.target.value}))}/>
+            </Field>
+            <Field label="Serial Number / VIN" fullWidth>
+              <input style={inputStyle} value={form.vin||''} onChange={e=>setForm(p=>({...p,vin:e.target.value}))} placeholder="e.g. 1FTZX1722XKA76091"/>
             </Field>
             <Field label="Comments" fullWidth>
               <textarea style={{...inputStyle,height:80,resize:'vertical'}} value={form.comments||''} onChange={e=>setForm(p=>({...p,comments:e.target.value}))} placeholder="Known issues, notes, follow-up needed…"/>
