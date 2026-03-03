@@ -187,7 +187,7 @@ function AssetDetail({ asset: initialAsset, onClose, onEdit, canEdit, currentUse
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
-                          <span style={{ fontWeight: 600, fontSize: 13.5, color: '#111827' }}>{l.title}</span>
+                          <span style={{ fontWeight: 600, fontSize: 13.5, color: l.title ? '#111827' : '#9ca3af', fontStyle: l.title ? 'normal' : 'italic' }}>{l.title || '—'}</span>
                           <Badge text={l.type} color={TYPE_COLORS[l.type] || '#64748b'} />
                         </div>
                         <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#9ca3af', flexWrap: 'wrap' }}>
