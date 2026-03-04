@@ -155,7 +155,7 @@ export function History() {
                   <div style={{fontFamily:"'DM Mono',monospace",fontSize:12,color:'#f97316'}}>{l.asset_id}</div>
                   <div style={{fontSize:11,color:'#64748b'}}>{l.assets?.name}</div>
                 </td>
-                <td style={{padding:'12px 16px',fontWeight:500,maxWidth:180}}>{l.title||(l.description?<span style={{color:'#6b7280',fontSize:12}}>{l.description.slice(0,60)}{l.description.length>60?'…':''}</span>:<span style={{color:'#9ca3af',fontStyle:'italic',fontSize:12}}>—</span>)}</td>
+                <td style={{padding:'12px 16px',fontWeight:500,maxWidth:180,color:'#f3f4f6'}}>{l.title||(l.description?<span style={{color:'#9ca3af',fontSize:12}}>{l.description.slice(0,60)}{l.description.length>60?'…':''}</span>:<span style={{color:'#6b7280',fontStyle:'italic',fontSize:12}}>—</span>)}</td>
                 <td style={{padding:'12px 16px'}}><Badge text={l.type} color={TYPE_COLORS[l.type]||'#64748b'}/></td>
                 <td style={{padding:'12px 16px',color:'#94a3b8'}}>{l.performed_by||'—'}</td>
                 <td style={{padding:'12px 16px',color:'#94a3b8'}}>{l.internal_hours>0?`${l.internal_hours}h`:'—'}</td>
