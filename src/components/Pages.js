@@ -92,7 +92,7 @@ export function History() {
       <PageHeader title="Maintenance History" subtitle="Full audit trail per asset"/>
       <div style={{display:'flex',gap:12,marginBottom:20,flexWrap:'wrap'}}>
         <div style={{position:'relative',flex:'1 1 200px'}}>
-          <div style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'#475569'}}><Icon name="search" size={15}/></div>
+          <div style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'#6b7280'}}><Icon name="search" size={15}/></div>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search title or asset ID…" style={{...inputStyle,paddingLeft:36}}/>
         </div>
         <select value={assetFilter} onChange={e=>setAssetFilter(e.target.value)} style={selectStyle}>
@@ -112,7 +112,7 @@ export function History() {
       {selAsset && (
         <div style={{background:'#ffffff',border:'1px solid #f97316',borderRadius:12,padding:20,marginBottom:20,display:'flex',gap:24,flexWrap:'wrap',alignItems:'flex-start'}}>
           <div>
-            <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'#475569',marginBottom:4}}>Selected Asset</div>
+            <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'#6b7280',marginBottom:4}}>Selected Asset</div>
             <div style={{fontSize:18,fontWeight:700}}>{selAsset.name}</div>
             <div style={{fontSize:12,color:'#64748b'}}>{selAsset.id} · {[selAsset.make,selAsset.model,selAsset.year].filter(Boolean).join(' ')}</div>
           </div>
@@ -125,7 +125,7 @@ export function History() {
             ['Invoices', aInvoices.length],
           ].map(([l,v])=>(
             <div key={l}>
-              <div style={{fontSize:11,fontWeight:600,letterSpacing:1.5,textTransform:'uppercase',color:'#475569',marginBottom:2}}>{l}</div>
+              <div style={{fontSize:11,fontWeight:600,letterSpacing:1.5,textTransform:'uppercase',color:'#6b7280',marginBottom:2}}>{l}</div>
               <div style={{fontSize:18,fontWeight:700}}>{v}</div>
             </div>
           ))}
@@ -137,12 +137,12 @@ export function History() {
           <thead>
             <tr style={{borderBottom:'1px solid #e5e7eb'}}>
               {['Date','Asset','Task','Type','Performed By','Int. Hrs','Ext. Cost','Notes'].map(h=>(
-                <th key={h} style={{padding:'12px 16px',textAlign:'left',fontSize:11,fontWeight:600,letterSpacing:1.5,textTransform:'uppercase',color:'#475569'}}>{h}</th>
+                <th key={h} style={{padding:'12px 16px',textAlign:'left',fontSize:11,fontWeight:600,letterSpacing:1.5,textTransform:'uppercase',color:'#6b7280'}}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.length===0 && <tr><td colSpan={8} style={{padding:32,textAlign:'center',color:'#475569'}}>No records found</td></tr>}
+            {filtered.length===0 && <tr><td colSpan={8} style={{padding:32,textAlign:'center',color:'#6b7280'}}>No records found</td></tr>}
             {filtered.map(l=>(
               <tr key={l.id}
                 onClick={()=>setDetailLog(l)}
@@ -150,15 +150,15 @@ export function History() {
                 onMouseEnter={e=>e.currentTarget.style.background='#f3f4f6'}
                 onMouseLeave={e=>e.currentTarget.style.background='transparent'}
               >
-                <td style={{padding:'12px 16px',color:'#94a3b8',whiteSpace:'nowrap'}}>{fmtDate(l.date)}</td>
+                <td style={{padding:'12px 16px',color:'#9ca3af',whiteSpace:'nowrap'}}>{fmtDate(l.date)}</td>
                 <td style={{padding:'12px 16px'}}>
                   <div style={{fontFamily:"'DM Mono',monospace",fontSize:12,color:'#f97316'}}>{l.asset_id}</div>
                   <div style={{fontSize:11,color:'#64748b'}}>{l.assets?.name}</div>
                 </td>
                 <td style={{padding:'12px 16px',fontWeight:500,maxWidth:180,color:'#111827'}}>{l.title||(l.description?<span style={{color:'#6b7280',fontSize:12}}>{l.description.slice(0,60)}{l.description.length>60?'…':''}</span>:<span style={{color:'#9ca3af',fontStyle:'italic',fontSize:12}}>—</span>)}</td>
                 <td style={{padding:'12px 16px'}}><Badge text={l.type} color={TYPE_COLORS[l.type]||'#64748b'}/></td>
-                <td style={{padding:'12px 16px',color:'#94a3b8'}}>{l.performed_by||'—'}</td>
-                <td style={{padding:'12px 16px',color:'#94a3b8'}}>{l.internal_hours>0?`${l.internal_hours}h`:'—'}</td>
+                <td style={{padding:'12px 16px',color:'#9ca3af'}}>{l.performed_by||'—'}</td>
+                <td style={{padding:'12px 16px',color:'#9ca3af'}}>{l.internal_hours>0?`${l.internal_hours}h`:'—'}</td>
                 <td style={{padding:'12px 16px',fontWeight:l.external_cost>0?600:400,color:l.external_cost>0?'#f97316':'#64748b'}}>{l.external_cost>0?fmtCurrency(l.external_cost):'—'}</td>
                 <td style={{padding:'12px 16px',color:'#64748b',fontSize:12,maxWidth:160}}>{l.notes||'—'}</td>
               </tr>
@@ -197,13 +197,13 @@ export function History() {
               {detailLog.description && (
                 <div style={{gridColumn:'1/-1'}}>
                   <div style={{fontSize:10.5,fontWeight:600,color:'#9ca3af',letterSpacing:.5,textTransform:'uppercase',marginBottom:3}}>DESCRIPTION</div>
-                  <div style={{fontSize:13.5,color:'#374151',lineHeight:1.6,background:'#f9fafb',borderRadius:8,padding:'10px 14px'}}>{detailLog.description}</div>
+                  <div style={{fontSize:13.5,color:'#6b7280',lineHeight:1.6,background:'#f9fafb',borderRadius:8,padding:'10px 14px'}}>{detailLog.description}</div>
                 </div>
               )}
               {detailLog.notes && (
                 <div style={{gridColumn:'1/-1'}}>
                   <div style={{fontSize:10.5,fontWeight:600,color:'#9ca3af',letterSpacing:.5,textTransform:'uppercase',marginBottom:3}}>NOTES / PARTS</div>
-                  <div style={{fontSize:13.5,color:'#374151'}}>{detailLog.notes}</div>
+                  <div style={{fontSize:13.5,color:'#6b7280'}}>{detailLog.notes}</div>
                 </div>
               )}
               {detailLog.receipt_name && (
@@ -339,7 +339,7 @@ export function Costs() {
           ['Records',fLogs.length+fInvoices.length,'#8b5cf6'],
         ].map(([l,v,c])=>(
           <div key={l} style={{background:'#ffffff',border:'1px solid #e5e7eb',borderRadius:10,padding:'16px 20px'}}>
-            <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'#475569',marginBottom:6}}>{l}</div>
+            <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'#6b7280',marginBottom:6}}>{l}</div>
             <div style={{fontSize:24,fontWeight:700,color:c}}>{v}</div>
           </div>
         ))}
@@ -353,15 +353,15 @@ export function Costs() {
               const asset=groupBy==='asset'?assets.find(a=>a.id===g.label):null;
               return (
                 <div key={g.label} style={{display:'flex',alignItems:'center',gap:14}}>
-                  <div style={{width:150,fontSize:12,color:'#94a3b8',textAlign:'right',flexShrink:0}}>
+                  <div style={{width:150,fontSize:12,color:'#9ca3af',textAlign:'right',flexShrink:0}}>
                     <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:'#f97316'}}>{g.label}</div>
-                    {asset&&<div style={{fontSize:11,color:'#475569',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{asset.name}</div>}
+                    {asset&&<div style={{fontSize:11,color:'#6b7280',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{asset.name}</div>}
                   </div>
                   <div style={{flex:1,height:28,background:'#e5e7eb',borderRadius:4,overflow:'hidden',position:'relative'}}>
                     <div style={{height:'100%',width:`${pct}%`,background:'linear-gradient(90deg,#f97316,#fb923c)',borderRadius:4,minWidth:4,display:'flex',alignItems:'center',paddingLeft:8}}>
                       {pct>15&&<span style={{fontSize:11,fontWeight:600,color:'#fff',whiteSpace:'nowrap'}}>{fmtCurrency(g.cost)}</span>}
                     </div>
-                    {pct<=15&&<span style={{position:'absolute',left:`${pct+1}%`,top:'50%',transform:'translateY(-50%)',fontSize:11,fontWeight:600,color:'#94a3b8',whiteSpace:'nowrap',paddingLeft:4}}>{fmtCurrency(g.cost)}</span>}
+                    {pct<=15&&<span style={{position:'absolute',left:`${pct+1}%`,top:'50%',transform:'translateY(-50%)',fontSize:11,fontWeight:600,color:'#9ca3af',whiteSpace:'nowrap',paddingLeft:4}}>{fmtCurrency(g.cost)}</span>}
                   </div>
                   <div style={{width:60,textAlign:'right',fontSize:12,color:'#64748b',flexShrink:0}}>{g.hours>0?`${g.hours}h`:'—'}</div>
                 </div>
@@ -470,7 +470,7 @@ export function PMSchedules() {
                   </div>
                   <div style={{fontSize:12,color:'#64748b'}}>{p.assets?.name}</div>
                   <div style={{display:'flex',gap:20,marginTop:6,fontSize:12,color:'#64748b'}}>
-                    {p.last_performed&&<span>Last: <strong style={{color:'#94a3b8'}}>{fmtDate(p.last_performed)}</strong></span>}
+                    {p.last_performed&&<span>Last: <strong style={{color:'#9ca3af'}}>{fmtDate(p.last_performed)}</strong></span>}
                     {p.next_due&&<span>Next: <strong style={{color:meta.color}}>{fmtDate(p.next_due)}</strong></span>}
                   </div>
                   {p.notes&&<div style={{fontSize:12,color:'#64748b',marginTop:4}}>{p.notes}</div>}
