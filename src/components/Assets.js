@@ -135,12 +135,12 @@ function AssetDetail({ asset: initialAsset, onClose, onEdit, canEdit, currentUse
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 12, background: '#f9fafb', borderRadius: 10, padding: '14px 18px', border: '1px solid #e5e7eb' }}>
             {[
               ['Category', <Badge text={asset.category} color={CAT_COLORS[asset.category] || '#64748b'} />],
-              ['Type', <span style={{ fontSize: 13, color: '#374151', textTransform: 'capitalize' }}>{asset.type || '—'}</span>],
-              ['Year / Make / Model', <span style={{ fontSize: 13, color: '#374151' }}>{[asset.year, asset.make, asset.model].filter(Boolean).join(' ') || '—'}</span>],
+              ['Type', <span style={{ fontSize: 13, color: '#6b7280', textTransform: 'capitalize' }}>{asset.type || '—'}</span>],
+              ['Year / Make / Model', <span style={{ fontSize: 13, color: '#6b7280' }}>{[asset.year, asset.make, asset.model].filter(Boolean).join(' ') || '—'}</span>],
               ['Condition', asset.condition ? <Badge text={asset.condition} color={CONDITION_COLORS[asset.condition] || '#64748b'} /> : <span style={{ color: '#d1d5db' }}>—</span>],
               ['Status', <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 500, color: STATUS_COLORS[asset.status || 'active'] }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: STATUS_COLORS[asset.status || 'active'], display: 'inline-block' }} />{(asset.status || 'active').toUpperCase()}</span>],
-              ['Odometer / Hours', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#374151' }}>{asset.odometer || '—'}<span style={{ display: 'block', fontSize: 10, color: asset.odometer_date ? '#9ca3af' : '#d1d5db', marginTop: 2 }}>{asset.odometer_date ? `as of ${fmtDate(asset.odometer_date)}` : 'no date recorded'}</span></span>],
-              ['Serial / VIN', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#374151' }}>{asset.vin || '—'}</span>],
+              ['Odometer / Hours', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#6b7280' }}>{asset.odometer || '—'}<span style={{ display: 'block', fontSize: 10, color: asset.odometer_date ? '#9ca3af' : '#d1d5db', marginTop: 2 }}>{asset.odometer_date ? `as of ${fmtDate(asset.odometer_date)}` : 'no date recorded'}</span></span>],
+              ['Serial / VIN', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#6b7280' }}>{asset.vin || '—'}</span>],
             ].map(([label, value]) => (
               <div key={label}>
                 <div style={{ fontSize: 10.5, fontWeight: 600, color: '#9ca3af', letterSpacing: .5, textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
@@ -262,7 +262,7 @@ function AssetDetail({ asset: initialAsset, onClose, onEdit, canEdit, currentUse
                     {entry.fields && Object.keys(entry.fields).length > 0 && (
                       <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {Object.entries(entry.fields).filter(([, v]) => v).map(([k, v]) => (
-                          <span key={k} style={{ fontSize: 11, background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 4, padding: '2px 7px', color: '#374151' }}>
+                          <span key={k} style={{ fontSize: 11, background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 4, padding: '2px 7px', color: '#6b7280' }}>
                             {k}: <strong>{String(v)}</strong>
                           </span>
                         ))}
@@ -296,7 +296,7 @@ function AssetDetail({ asset: initialAsset, onClose, onEdit, canEdit, currentUse
               ].map(([label, val]) => (
                 <div key={label}>
                   <div style={{ fontSize: 10.5, fontWeight: 600, color: '#9ca3af', letterSpacing: .5, textTransform: 'uppercase', marginBottom: 3 }}>{label}</div>
-                  <div style={{ fontSize: 13.5, color: '#374151', textTransform: label === 'Status' ? 'capitalize' : 'none' }}>{val}</div>
+                  <div style={{ fontSize: 13.5, color: '#6b7280', textTransform: label === 'Status' ? 'capitalize' : 'none' }}>{val}</div>
                 </div>
               ))}
             </div>
@@ -344,8 +344,8 @@ function AssetDetail({ asset: initialAsset, onClose, onEdit, canEdit, currentUse
                   <div style={{ fontSize: 13.5, color: '#111827' }}>{val}</div>
                 </div>
               ))}
-              {detailLog.description && <div style={{ gridColumn: '1/-1' }}><div style={{ fontSize: 10.5, fontWeight: 600, color: '#9ca3af', letterSpacing: .5, textTransform: 'uppercase', marginBottom: 3 }}>DESCRIPTION</div><div style={{ fontSize: 13.5, color: '#374151', lineHeight: 1.6, background: '#f9fafb', borderRadius: 8, padding: '10px 14px' }}>{detailLog.description}</div></div>}
-              {detailLog.notes && <div style={{ gridColumn: '1/-1' }}><div style={{ fontSize: 10.5, fontWeight: 600, color: '#9ca3af', letterSpacing: .5, textTransform: 'uppercase', marginBottom: 3 }}>NOTES / PARTS</div><div style={{ fontSize: 13.5, color: '#374151' }}>{detailLog.notes}</div></div>}
+              {detailLog.description && <div style={{ gridColumn: '1/-1' }}><div style={{ fontSize: 10.5, fontWeight: 600, color: '#9ca3af', letterSpacing: .5, textTransform: 'uppercase', marginBottom: 3 }}>DESCRIPTION</div><div style={{ fontSize: 13.5, color: '#6b7280', lineHeight: 1.6, background: '#f9fafb', borderRadius: 8, padding: '10px 14px' }}>{detailLog.description}</div></div>}
+              {detailLog.notes && <div style={{ gridColumn: '1/-1' }}><div style={{ fontSize: 10.5, fontWeight: 600, color: '#9ca3af', letterSpacing: .5, textTransform: 'uppercase', marginBottom: 3 }}>NOTES / PARTS</div><div style={{ fontSize: 13.5, color: '#6b7280' }}>{detailLog.notes}</div></div>}
               {detailLog.receipt_name && <div style={{ gridColumn: '1/-1' }}><div style={{ fontSize: 10.5, fontWeight: 600, color: '#9ca3af', letterSpacing: .5, textTransform: 'uppercase', marginBottom: 3 }}>RECEIPT</div><a href={supabase.storage.from('maintenance-files').getPublicUrl(detailLog.receipt_path).data.publicUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#3b82f6', textDecoration: 'none' }}>📎 {detailLog.receipt_name}</a></div>}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid #e5e7eb' }}>
