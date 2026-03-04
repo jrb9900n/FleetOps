@@ -46,19 +46,19 @@ export default function Dashboard({ setTab }) {
 
   const StatCard = ({label,value,sub,color,icon,tab}) => (
     <div onClick={()=>tab&&setTab(tab)} style={{
-      background:'#0f1218', border:'1px solid #1e2530', borderRadius:12,
-      padding:'20px 24px', cursor:tab?'pointer':'default', transition:'border-color .2s',
+      background:'#fff', border:'1px solid #e5e7eb', borderRadius:12,
+      padding:'20px 24px', cursor:tab?'pointer':'default', transition:'all .15s', boxShadow:'0 1px 3px rgba(0,0,0,.06)',
     }}
-    onMouseEnter={e=>{if(tab)e.currentTarget.style.borderColor='#f97316';}}
-    onMouseLeave={e=>{e.currentTarget.style.borderColor='#1e2530';}}
+    onMouseEnter={e=>{if(tab){e.currentTarget.style.borderColor='#f97316';e.currentTarget.style.boxShadow='0 2px 8px rgba(249,115,22,.15)';}}}
+    onMouseLeave={e=>{e.currentTarget.style.borderColor='#e5e7eb';e.currentTarget.style.boxShadow='0 1px 3px rgba(0,0,0,.06)';}}
     >
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
         <div>
-          <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'#475569',marginBottom:8}}>{label}</div>
-          <div style={{fontSize:32,fontWeight:700,color:color||'#e2e8f0'}}>{value}</div>
-          {sub && <div style={{fontSize:12,color:'#475569',marginTop:4}}>{sub}</div>}
+          <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'#6b7280',marginBottom:8}}>{label}</div>
+          <div style={{fontSize:32,fontWeight:700,color:color||'#111827'}}>{value}</div>
+          {sub && <div style={{fontSize:12,color:'#6b7280',marginTop:4}}>{sub}</div>}
         </div>
-        <div style={{color:color||'#475569'}}><Icon name={icon} size={24}/></div>
+        <div style={{color:color||'#9ca3af'}}><Icon name={icon} size={24}/></div>
       </div>
     </div>
   );
@@ -80,7 +80,7 @@ export default function Dashboard({ setTab }) {
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
         <Section title="Recent Maintenance" action={can('history')?{label:'View All',fn:()=>setTab('history')}:null}>
           {recentLogs.length===0 ? <Empty text="No maintenance logs yet"/> : recentLogs.map(l=>(
-            <div key={l.id} style={{padding:'12px 0',borderBottom:'1px solid #1e2530',display:'flex',justifyContent:'space-between'}}>
+            <div key={l.id} style={{padding:'12px 0',borderBottom:'1px solid #e5e7eb',display:'flex',justifyContent:'space-between'}}>
               <div>
                 <div style={{fontWeight:600,fontSize:13}}>{l.title}</div>
                 <div style={{fontSize:12,color:'#64748b',marginTop:2}}>{l.asset_id} · {l.assets?.name}</div>
@@ -99,7 +99,7 @@ export default function Dashboard({ setTab }) {
             : [...pmAlerts.overdue,...pmAlerts.dueSoon].slice(0,6).map(p=>{
               const overdue = new Date(p.next_due)<new Date();
               return (
-                <div key={p.id} style={{padding:'12px 0',borderBottom:'1px solid #1e2530',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div key={p.id} style={{padding:'12px 0',borderBottom:'1px solid #e5e7eb',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                   <div>
                     <div style={{fontWeight:600,fontSize:13}}>{p.task}</div>
                     <div style={{fontSize:12,color:'#64748b',marginTop:2}}>{p.asset_id} · {p.assets?.name}</div>
@@ -116,7 +116,7 @@ export default function Dashboard({ setTab }) {
 
 export function LoadingPage() {
   return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'60vh',color:'#475569',fontSize:14}}>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'60vh',color:'#6b7280',fontSize:14}}>
       Loading…
     </div>
   );
