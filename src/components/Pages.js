@@ -110,13 +110,13 @@ export function History() {
       </div>
 
       {selAsset && (
-        <div style={{background:'#0f1218',border:'1px solid #f97316',borderRadius:12,padding:20,marginBottom:20,display:'flex',gap:24,flexWrap:'wrap',alignItems:'flex-start'}}>
+        <div style={{background:'#ffffff',border:'1px solid #f97316',borderRadius:12,padding:20,marginBottom:20,display:'flex',gap:24,flexWrap:'wrap',alignItems:'flex-start'}}>
           <div>
             <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'#475569',marginBottom:4}}>Selected Asset</div>
             <div style={{fontSize:18,fontWeight:700}}>{selAsset.name}</div>
             <div style={{fontSize:12,color:'#64748b'}}>{selAsset.id} · {[selAsset.make,selAsset.model,selAsset.year].filter(Boolean).join(' ')}</div>
           </div>
-          <div style={{width:1,background:'#1e2530',alignSelf:'stretch'}}/>
+          <div style={{width:1,background:'#e5e7eb',alignSelf:'stretch'}}/>
           {[
             ['Maintenance Logs', filtered.length],
             ['Total Ext. Cost', fmtCurrency(filtered.reduce((s,l)=>s+(Number(l.external_cost)||0),0)+aInvoices.reduce((s,i)=>s+(Number(i.amount)||0),0))],
@@ -132,10 +132,10 @@ export function History() {
         </div>
       )}
 
-      <div style={{background:'#0f1218',borderRadius:12,border:'1px solid #1e2530',overflow:'hidden'}}>
+      <div style={{background:'#ffffff',borderRadius:12,border:'1px solid #e5e7eb',overflow:'hidden'}}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:13.5}}>
           <thead>
-            <tr style={{borderBottom:'1px solid #1e2530'}}>
+            <tr style={{borderBottom:'1px solid #e5e7eb'}}>
               {['Date','Asset','Task','Type','Performed By','Int. Hrs','Ext. Cost','Notes'].map(h=>(
                 <th key={h} style={{padding:'12px 16px',textAlign:'left',fontSize:11,fontWeight:600,letterSpacing:1.5,textTransform:'uppercase',color:'#475569'}}>{h}</th>
               ))}
@@ -146,8 +146,8 @@ export function History() {
             {filtered.map(l=>(
               <tr key={l.id}
                 onClick={()=>setDetailLog(l)}
-                style={{borderBottom:'1px solid #1e2530', cursor:'pointer'}}
-                onMouseEnter={e=>e.currentTarget.style.background='#111827'}
+                style={{borderBottom:'1px solid #e5e7eb', cursor:'pointer'}}
+                onMouseEnter={e=>e.currentTarget.style.background='#f3f4f6'}
                 onMouseLeave={e=>e.currentTarget.style.background='transparent'}
               >
                 <td style={{padding:'12px 16px',color:'#94a3b8',whiteSpace:'nowrap'}}>{fmtDate(l.date)}</td>
@@ -319,7 +319,7 @@ export function Costs() {
     <div style={{padding:32}}>
       <PageHeader title="Cost Analysis" subtitle="External spend and internal labor breakdown"/>
       <div style={{display:'flex',gap:12,marginBottom:24,flexWrap:'wrap',alignItems:'center'}}>
-        <div style={{display:'flex',gap:2,background:'#0f1218',border:'1px solid #1e2530',borderRadius:8,padding:3}}>
+        <div style={{display:'flex',gap:2,background:'#ffffff',border:'1px solid #e5e7eb',borderRadius:8,padding:3}}>
           {[['asset','By Asset'],['category','By Category'],['type','By Type'],['vendor','By Vendor']].map(([v,l])=>(
             <button key={v} onClick={()=>setGroupBy(v)} style={{padding:'6px 14px',border:'none',borderRadius:6,cursor:'pointer',fontFamily:'inherit',fontSize:12.5,fontWeight:500,background:groupBy===v?'#f97316':'transparent',color:groupBy===v?'#fff':'#64748b'}}>{l}</button>
           ))}
@@ -338,14 +338,14 @@ export function Costs() {
           ['Avg Cost / Log',fLogs.length>0?fmtCurrency(totalCost/fLogs.length):'—','#22c55e'],
           ['Records',fLogs.length+fInvoices.length,'#8b5cf6'],
         ].map(([l,v,c])=>(
-          <div key={l} style={{background:'#0f1218',border:'1px solid #1e2530',borderRadius:10,padding:'16px 20px'}}>
+          <div key={l} style={{background:'#ffffff',border:'1px solid #e5e7eb',borderRadius:10,padding:'16px 20px'}}>
             <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'#475569',marginBottom:6}}>{l}</div>
             <div style={{fontSize:24,fontWeight:700,color:c}}>{v}</div>
           </div>
         ))}
       </div>
       {groups.length===0 ? <Empty text="No cost data for selected filters"/> : (
-        <div style={{background:'#0f1218',border:'1px solid #1e2530',borderRadius:12,padding:24}}>
+        <div style={{background:'#ffffff',border:'1px solid #e5e7eb',borderRadius:12,padding:24}}>
           <div style={{fontWeight:600,marginBottom:20,fontSize:15}}>Spend by {groupBy}</div>
           <div style={{display:'flex',flexDirection:'column',gap:10}}>
             {groups.slice(0,25).map(g=>{
@@ -357,7 +357,7 @@ export function Costs() {
                     <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:'#f97316'}}>{g.label}</div>
                     {asset&&<div style={{fontSize:11,color:'#475569',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{asset.name}</div>}
                   </div>
-                  <div style={{flex:1,height:28,background:'#1e2530',borderRadius:4,overflow:'hidden',position:'relative'}}>
+                  <div style={{flex:1,height:28,background:'#e5e7eb',borderRadius:4,overflow:'hidden',position:'relative'}}>
                     <div style={{height:'100%',width:`${pct}%`,background:'linear-gradient(90deg,#f97316,#fb923c)',borderRadius:4,minWidth:4,display:'flex',alignItems:'center',paddingLeft:8}}>
                       {pct>15&&<span style={{fontSize:11,fontWeight:600,color:'#fff',whiteSpace:'nowrap'}}>{fmtCurrency(g.cost)}</span>}
                     </div>
@@ -451,7 +451,7 @@ export function PMSchedules() {
       </div>
       <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
         {[['all','All'],['overdue','Overdue'],['due_soon','Due Soon'],['ok','On Track'],['scheduled','Scheduled']].map(([v,l])=>(
-          <button key={v} onClick={()=>setFilterStatus(v)} style={{padding:'6px 14px',border:'1px solid',borderRadius:6,cursor:'pointer',fontFamily:'inherit',fontSize:12.5,fontWeight:500,background:filterStatus===v?'#f97316':'transparent',color:filterStatus===v?'#fff':'#64748b',borderColor:filterStatus===v?'#f97316':'#1e2530'}}>{l}</button>
+          <button key={v} onClick={()=>setFilterStatus(v)} style={{padding:'6px 14px',border:'1px solid',borderRadius:6,cursor:'pointer',fontFamily:'inherit',fontSize:12.5,fontWeight:500,background:filterStatus===v?'#f97316':'transparent',color:filterStatus===v?'#fff':'#64748b',borderColor:filterStatus===v?'#f97316':'#e5e7eb'}}>{l}</button>
         ))}
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -459,7 +459,7 @@ export function PMSchedules() {
         {[...filtered].sort((a,b)=>{ const o={overdue:0,due_soon:1,scheduled:2,ok:3}; return (o[getStatus(a)]||3)-(o[getStatus(b)]||3); }).map(p=>{
           const meta=STATUS_META[getStatus(p)];
           return (
-            <div key={p.id} style={{background:'#0f1218',border:'1px solid #1e2530',borderLeft:`3px solid ${meta.color}`,borderRadius:10,padding:'16px 20px'}}>
+            <div key={p.id} style={{background:'#ffffff',border:'1px solid #e5e7eb',borderLeft:`3px solid ${meta.color}`,borderRadius:10,padding:'16px 20px'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:10}}>
                 <div style={{flex:1}}>
                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4,flexWrap:'wrap'}}>
@@ -488,7 +488,7 @@ export function PMSchedules() {
       </div>
       {showForm && (
         <Modal title="Add PM Schedule" onClose={()=>setShowForm(false)}>
-          <div style={{background:'#1e2530',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#64748b',marginBottom:16}}>
+          <div style={{background:'#e5e7eb',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#64748b',marginBottom:16}}>
             💡 After marking a time-based PM as done, the system automatically advances the next due date.
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
