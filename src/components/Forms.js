@@ -99,7 +99,7 @@ export function LogMaintenance() {
           <Field label="Receipt / Invoice Upload">
             <div style={{display:'flex', alignItems:'center', gap:10}}>
               <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}} onChange={handleFile}/>
-              <button onClick={()=>fileRef.current.click()} disabled={uploading} style={{...inputStyle, cursor:'pointer', background:'#f9fafb', color:'#374151', width:'auto', padding:'9px 14px', display:'flex', alignItems:'center', gap:7}}>
+              <button onClick={()=>fileRef.current.click()} disabled={uploading} style={{...inputStyle, cursor:'pointer', background:'#f9fafb', color:'#6b7280', width:'auto', padding:'9px 14px', display:'flex', alignItems:'center', gap:7}}>
                 <Icon name="upload" size={14}/> {uploading ? 'Uploading…' : uploadedFile ? uploadedFile.name : 'Choose file…'}
               </button>
               {uploadedFile && <button onClick={()=>setUploadedFile(null)} style={{background:'transparent',border:'none',cursor:'pointer',color:'#ef4444',padding:4}}><Icon name="close" size={14}/></button>}
@@ -313,12 +313,12 @@ export function ReportDamage() {
               )}
               <div style={{gridColumn:'1/-1'}}>
                 <div style={{fontSize:11, fontWeight:600, color:'#6b7280', letterSpacing:.5, marginBottom:3}}>DESCRIPTION</div>
-                <div style={{fontSize:14, color:'#374151', lineHeight:1.6, background:'#f9fafb', borderRadius:8, padding:'10px 14px'}}>{selectedReport.description}</div>
+                <div style={{fontSize:14, color:'#6b7280', lineHeight:1.6, background:'#f9fafb', borderRadius:8, padding:'10px 14px'}}>{selectedReport.description}</div>
               </div>
               {selectedReport.action_taken && (
                 <div style={{gridColumn:'1/-1'}}>
                   <div style={{fontSize:11, fontWeight:600, color:'#6b7280', letterSpacing:.5, marginBottom:3}}>IMMEDIATE ACTION TAKEN</div>
-                  <div style={{fontSize:14, color:'#374151'}}>{selectedReport.action_taken}</div>
+                  <div style={{fontSize:14, color:'#6b7280'}}>{selectedReport.action_taken}</div>
                 </div>
               )}
               {selectedReport.resolved_at && (
@@ -475,7 +475,7 @@ export function Invoices() {
             <Field label="Upload File (PDF / Image)">
               <div style={{display:'flex', alignItems:'center', gap:10}}>
                 <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}} onChange={handleFile}/>
-                <button onClick={()=>fileRef.current.click()} disabled={uploading} style={{...inputStyle, cursor:'pointer', background:'#f9fafb', color:'#374151', width:'auto', padding:'9px 14px', display:'flex', alignItems:'center', gap:7}}>
+                <button onClick={()=>fileRef.current.click()} disabled={uploading} style={{...inputStyle, cursor:'pointer', background:'#f9fafb', color:'#6b7280', width:'auto', padding:'9px 14px', display:'flex', alignItems:'center', gap:7}}>
                   <Icon name="upload" size={14}/> {uploading ? 'Uploading…' : uploadedFile ? uploadedFile.name : 'Choose file…'}
                 </button>
                 {uploadedFile && <button onClick={()=>setUploadedFile(null)} style={{background:'transparent',border:'none',cursor:'pointer',color:'#ef4444',padding:4}}><Icon name="close" size={14}/></button>}
