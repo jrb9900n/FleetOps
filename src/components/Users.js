@@ -64,10 +64,14 @@ export default function Users() {
 
   const deleteUser = async (u) => {
     if (!window.confirm(`Delete ${u.full_name||u.email}? This cannot be undone.`)) return;
-    // Delete profile first (auth user cascade may handle the rest depending on setup)
-    const { error } = await supabase.from('profiles').delete().eq('id', u.id);
-    if (error) return show(error.message, 'error');
-    show('User removed');
+    // Use RPC to delete from auth.users (cascades to profiles)
+    const { error } = await supabase.rpc('delete_auth_user', { user_id: u.id });
+    if (error) {
+      // Fallback: delete profile row only
+      const { error: e2 } = await supabase.from('profiles').delete().eq('id', u.id);
+      if (e2) return show(e2.message, 'error');
+    }
+    show('User deleted');
     load();
   };
 
