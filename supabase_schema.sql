@@ -166,14 +166,14 @@ create policy "logs_delete" on public.maintenance_logs for delete
 
 -- DAMAGE REPORTS: anyone can insert; foreman/office/admin can see all; crew sees own
 create policy "damage_select" on public.damage_reports for select
-  using (public.my_role() in ('admin','office_manager','foreman')
+  using (public.my_role() in ('admin','operations','office_manager','foreman')
          or created_by = auth.uid());
 
 create policy "damage_insert" on public.damage_reports for insert
   with check (auth.role() = 'authenticated');
 
 create policy "damage_update" on public.damage_reports for update
-  using (public.my_role() in ('admin','foreman'));
+  using (public.my_role() in ('admin','operations','foreman'));
 
 -- INVOICES: only office_manager and admin
 create policy "invoices_select" on public.invoices for select
