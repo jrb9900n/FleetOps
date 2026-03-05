@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './components/LoginPage';
+import ResetPassword from './components/ResetPassword';
 import Dashboard from './components/Dashboard';
 import Assets from './components/Assets';
 import { LogMaintenance, ReportDamage, Invoices } from './components/Forms';
@@ -52,12 +53,13 @@ function getPublicRoute() {
 }
 
 function AppShell() {
-  const { user, profile, loading, can, signOut } = useAuth();
+  const { user, profile, loading, can, signOut, recovery } = useAuth();
   const [tab, setTab] = useState('dashboard');
 
   if (loading) return (
     <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#f9fafb',color:'#374151',fontFamily:"'DM Sans',sans-serif",fontSize:14}}>Loading…</div>
   );
+  if (recovery) return <ResetPassword/>;
   if (!user) return <LoginPage/>;
 
   const defaultTab = can('dashboard')?'dashboard':can('log')?'log':'damage';

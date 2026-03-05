@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser]       = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [recovery, setRecovery] = useState(false);
 
   const loadProfile = async (userId) => {
     const { data } = await supabase
@@ -24,8 +25,9 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      if (event === 'PASSWORD_RECOVERY') setRecovery(true);
       if (session?.user) loadProfile(session.user.id);
       else setProfile(null);
     });
@@ -38,6 +40,8 @@ export function AuthProvider({ children }) {
     profile,
     role: profile?.role ?? null,
     loading,
+    recovery,
+    clearRecovery: () => setRecovery(false),
     can: (action) => can(profile?.role, action),
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
     signOut: () => supabase.auth.signOut(),
