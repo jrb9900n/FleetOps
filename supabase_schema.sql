@@ -155,11 +155,11 @@ create policy "assets_delete" on public.assets for delete
 
 -- MAINTENANCE LOGS: field_crew, foreman, admin can insert; office_manager/admin/foreman can read all
 create policy "logs_select" on public.maintenance_logs for select
-  using (public.my_role() in ('admin','office_manager','foreman')
+  using (public.my_role() in ('admin','operations','office_manager','foreman')
          or created_by = auth.uid());
 
 create policy "logs_insert" on public.maintenance_logs for insert
-  with check (public.my_role() in ('admin','foreman','field_crew'));
+  with check (public.my_role() in ('admin','operations','foreman','field_crew'));
 
 create policy "logs_delete" on public.maintenance_logs for delete
   using (public.my_role() = 'admin');
@@ -190,13 +190,13 @@ create policy "pm_select" on public.pm_schedules for select
   using (auth.role() = 'authenticated');
 
 create policy "pm_insert" on public.pm_schedules for insert
-  with check (public.my_role() in ('admin','foreman'));
+  with check (public.my_role() in ('admin','operations','foreman'));
 
 create policy "pm_update" on public.pm_schedules for update
-  using (public.my_role() in ('admin','foreman'));
+  using (public.my_role() in ('admin','operations','foreman'));
 
 create policy "pm_delete" on public.pm_schedules for delete
-  using (public.my_role() in ('admin','foreman'));
+  using (public.my_role() in ('admin','operations','foreman'));
 
 
 -- ============================================================
