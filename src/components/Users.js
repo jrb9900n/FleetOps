@@ -53,7 +53,10 @@ export default function Users() {
       const { error } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
-        options: { data: { full_name: form.full_name, role: form.role } },
+        options: {
+          data: { full_name: form.full_name, role: form.role },
+          emailRedirectTo: window.location.origin + '/login',
+        },
       });
       if (error) return show(error.message,'error');
       show('User created — they will receive a confirmation email');
