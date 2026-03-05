@@ -141,6 +141,8 @@ function AssetDetail({ asset: initialAsset, onClose, onEdit, canEdit, currentUse
               ['Status', <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 500, color: STATUS_COLORS[asset.status || 'active'] }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: STATUS_COLORS[asset.status || 'active'], display: 'inline-block' }} />{(asset.status || 'active').toUpperCase()}</span>],
               ['Odometer / Hours', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#6b7280' }}>{asset.odometer || '—'}<span style={{ display: 'block', fontSize: 10, color: asset.odometer_date ? '#9ca3af' : '#d1d5db', marginTop: 2 }}>{asset.odometer_date ? `as of ${fmtDate(asset.odometer_date)}` : 'no date recorded'}</span></span>],
               ['Serial / VIN', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#6b7280' }}>{asset.vin || '—'}</span>],
+              ['Metering', <span style={{ fontSize: 12, color: '#6b7280' }}>{[asset.odometer_equipped && 'Odometer', asset.hour_meter_equipped && 'Hour Meter'].filter(Boolean).join(' + ') || 'None configured'}</span>],
+              ['PM Manual', asset.pm_manual_url ? <a href={asset.pm_manual_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#2563eb', textDecoration: 'underline' }}>View Manual ↗</a> : <span style={{ fontSize: 12, color: '#d1d5db' }}>—</span>],
             ].map(([label, value]) => (
               <div key={label}>
                 <div style={{ fontSize: 10.5, fontWeight: 600, color: '#9ca3af', letterSpacing: .5, textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
@@ -410,7 +412,7 @@ export default function Assets() {
   const [sortDir, setSortDir] = useState('asc');
   const [selectedAsset, setSelectedAsset] = useState(null);
   const { toast, show } = useToast();
-  const blank = { id: '', name: '', category: 'asphalt', type: 'Vehicle', year: '', make: '', model: '', status: 'active', condition: 'Good', odometer: '', odometer_date: '', vin: '', comments: '' };
+  const blank = { id: '', name: '', category: 'asphalt', type: 'Vehicle', year: '', make: '', model: '', status: 'active', condition: 'Good', odometer: '', odometer_date: '', vin: '', comments: '', hour_meter_equipped: false, odometer_equipped: false, pm_manual_url: '' };
   const [form, setForm] = useState(blank);
 
   useEffect(() => { load(); }, []);
@@ -421,19 +423,19 @@ export default function Assets() {
 
   const openNew = () => { setForm(blank); setEditId(null); setShowForm(true); };
   const openEdit = (a) => {
-    setForm({ ...blank, ...a, comments: a.comments || a.notes || '', odometer_date: a.odometer_date || '', vin: a.vin || '' });
+    setForm({ ...blank, ...a, comments: a.comments || a.notes || '', odometer_date: a.odometer_date || '', vin: a.vin || '', hour_meter_equipped: a.hour_meter_equipped || false, odometer_equipped: a.odometer_equipped || false, pm_manual_url: a.pm_manual_url || '' });
     setEditId(a.id); setShowForm(true); setSelectedAsset(null);
   };
 
   const save = async () => {
     if (!form.id || !form.name) return show('Asset ID and Name are required', 'error');
-    const payload = { id: form.id, name: form.name, category: form.category, type: form.type, year: form.year, make: form.make, model: form.model, status: form.status, condition: form.condition, odometer: form.odometer, odometer_date: form.odometer_date || null, vin: form.vin || null, comments: form.comments };
+    const payload = { id: form.id, name: form.name, category: form.category, type: form.type, year: form.year, make: form.make, model: form.model, status: form.status, condition: form.condition, odometer: form.odometer, odometer_date: form.odometer_date || null, vin: form.vin || null, comments: form.comments, hour_meter_equipped: form.hour_meter_equipped || false, odometer_equipped: form.odometer_equipped || false, pm_manual_url: form.pm_manual_url || null };
 
     if (editId) {
       // Capture what changed for audit
       const existing = assets.find(a => a.id === editId) || {};
       const changedFields = {};
-      ['name','status','condition','odometer','odometer_date','vin','comments','year','make','model','category','type'].forEach(k => {
+      ['name','status','condition','odometer','odometer_date','vin','comments','year','make','model','category','type','hour_meter_equipped','odometer_equipped','pm_manual_url'].forEach(k => {
         if ((form[k] || '') !== (existing[k] || '')) changedFields[k] = form[k] || '';
       });
       const { error } = await supabase.from('assets').update(payload).eq('id', editId);
@@ -527,6 +529,13 @@ export default function Assets() {
             <Field label="Reading As-Of Date"><input type="date" style={inputStyle} value={form.odometer_date || ''} onChange={e => setForm(p => ({ ...p, odometer_date: e.target.value }))} /></Field>
             <Field label="Serial Number / VIN" fullWidth><input style={inputStyle} value={form.vin || ''} onChange={e => setForm(p => ({ ...p, vin: e.target.value }))} placeholder="e.g. 1FTZX1722XKA76091" /></Field>
             <Field label="Comments" fullWidth><textarea style={{ ...inputStyle, height: 80, resize: 'vertical' }} value={form.comments || ''} onChange={e => setForm(p => ({ ...p, comments: e.target.value }))} placeholder="Known issues, notes, follow-up needed…" /></Field>
+            <Field label="Equipment Metering" fullWidth>
+              <div style={{ display: 'flex', gap: 20, alignItems: 'center', padding: '8px 0' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#374151', cursor: 'pointer' }}><input type="checkbox" checked={form.hour_meter_equipped || false} onChange={e => setForm(p => ({ ...p, hour_meter_equipped: e.target.checked }))} /> Has Hour Meter</label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#374151', cursor: 'pointer' }}><input type="checkbox" checked={form.odometer_equipped || false} onChange={e => setForm(p => ({ ...p, odometer_equipped: e.target.checked }))} /> Has Odometer</label>
+              </div>
+            </Field>
+            <Field label="PM Manual / Source URL" fullWidth><input style={inputStyle} value={form.pm_manual_url || ''} onChange={e => setForm(p => ({ ...p, pm_manual_url: e.target.value }))} placeholder="https://manuals.toro.com/..." /></Field>
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
             <GhostBtn onClick={() => setShowForm(false)}>Cancel</GhostBtn>
