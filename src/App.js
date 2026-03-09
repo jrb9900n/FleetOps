@@ -8,6 +8,7 @@ import { LogMaintenance, ReportDamage, Invoices } from './components/Forms';
 import { PublicLogMaintenance, PublicReportDamage } from './components/PublicForms';
 import { History, Costs, PMSchedules } from './components/Pages';
 import Users from './components/Users';
+import ArchivedAssets from './components/ArchivedAssets';
 import { Icon, ROLE_LABELS } from './components/ui';
 
 // ── Company branding — update these constants to match your company ──────────
@@ -75,11 +76,12 @@ function AppShell() {
     {id:'costs',label:'Costs',icon:'dollar',perm:'costs'},
     {id:'pm',label:'PM Schedules',icon:'bell',perm:'pm'},
     {id:'users',label:'Users',icon:'users',perm:'users'},
+    {id:'archive',label:'Archived Assets',icon:'trash',perm:'users'},  // admin-only (reuses users perm)
   ].filter(n=>can(n.perm));
 
   const PAGES = {
     dashboard:<Dashboard setTab={setTab}/>,assets:<Assets/>,log:<LogMaintenance/>,damage:<ReportDamage/>,
-    invoices:<Invoices/>,history:<History/>,costs:<Costs/>,pm:<PMSchedules/>,users:<Users/>,
+    invoices:<Invoices/>,history:<History/>,costs:<Costs/>,pm:<PMSchedules/>,users:<Users/>,archive:<ArchivedAssets/>,
   };
 
   const navigate = (id) => setTab(id);

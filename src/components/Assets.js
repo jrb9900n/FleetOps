@@ -450,12 +450,17 @@ export default function Assets() {
         if ((form[k] || '') !== (existing[k] || '')) changedFields[k] = form[k] || '';
       });
 
-      // If the ID changed, we need to delete and reinsert (ID is the PK)
+      // If the ID changed, use the safe rename function that updates all child records
+      // WITHOUT triggering cascade delete (avoids wiping logs, damage reports, etc.)
       if (form.id !== editId) {
-        const { error: delErr } = await supabase.from('assets').delete().eq('id', editId);
-        if (delErr) return show('Failed to rename asset: ' + delErr.message, 'error');
-        const { error: insErr } = await supabase.from('assets').insert(payload);
-        if (insErr) return show('Failed to save renamed asset: ' + insErr.message, 'error');
+        // Check new ID doesn't already exist
+        const { data: existing } = await supabase.from('assets').select('id').eq('id', form.id).single();
+        if (existing) return show(`Asset ID "${form.id}" already exists`, 'error');
+        const { error: renameErr } = await supabase.rpc('rename_asset', { old_id: editId, new_id: form.id });
+        if (renameErr) return show('Rename failed: ' + renameErr.message, 'error');
+        // Now update the remaining fields on the new ID
+        const { error: updateErr } = await supabase.from('assets').update(payload).eq('id', form.id);
+        if (updateErr) return show(updateErr.message, 'error');
       } else {
         const { error } = await supabase.from('assets').update(payload).eq('id', editId);
         if (error) return show(error.message, 'error');
@@ -477,9 +482,25 @@ export default function Assets() {
   };
 
   const remove = async (id) => {
-    if (!window.confirm('Delete this asset? This cannot be undone.')) return;
-    await supabase.from('assets').delete().eq('id', id);
-    show('Asset removed'); load();
+    if (!window.confirm(`Archive and remove asset ${id}? It will be saved in the Archived Assets log and can be restored by an admin.`)) return;
+    // Fetch full asset data
+    const { data: asset } = await supabase.from('assets').select('*').eq('id', id).single();
+    if (!asset) return show('Asset not found', 'error');
+    // Fetch audit trail snapshot
+    const { data: auditRows } = await supabase.from('asset_audit').select('*').eq('asset_id', id).order('changed_at', { ascending: false });
+    // Insert into deleted_assets archive
+    const { error: archiveErr } = await supabase.from('deleted_assets').insert({
+      ...asset,
+      deleted_by: profile?.full_name || 'Staff',
+      deleted_at: new Date().toISOString(),
+      audit_snapshot: auditRows || [],
+    });
+    if (archiveErr) return show('Archive failed: ' + archiveErr.message, 'error');
+    // Now hard delete (cascade will clean up child records)
+    const { error: deleteErr } = await supabase.from('assets').delete().eq('id', id);
+    if (deleteErr) return show('Delete failed: ' + deleteErr.message, 'error');
+    show('Asset archived and removed');
+    load();
   };
 
   const handleSort = (col) => { if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc'); else { setSortCol(col); setSortDir('asc'); } };
