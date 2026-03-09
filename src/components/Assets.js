@@ -7,6 +7,17 @@ import { LoadingPage } from './Dashboard';
 const CONDITION_COLORS = {
   'Excellent':'#16a34a','Good':'#65a30d','Fair':'#d97706','Poor':'#ea580c','Out of Service':'#dc2626',
 };
+const getConditionColor = (c) => {
+  if (!c) return '#64748b';
+  const match = Object.keys(CONDITION_COLORS).find(k => k.toLowerCase() === c.toLowerCase());
+  return match ? CONDITION_COLORS[match] : '#64748b';
+};
+// Normalize condition display to title case
+const normalizeCondition = (c) => {
+  if (!c) return null;
+  const match = Object.keys(CONDITION_COLORS).find(k => k.toLowerCase() === c.toLowerCase());
+  return match || c;
+};
 const TYPE_COLORS = { preventive:'#22c55e', corrective:'#ef4444', inspection:'#3b82f6', damage_repair:'#f59e0b', other:'#64748b' };
 const SEV_COLORS = { minor:'#22c55e', moderate:'#f59e0b', major:'#ef4444', critical:'#dc2626' };
 const AUDIT_ICONS = { asset_edit:'edit', maintenance_log:'wrench', damage_report:'alert' };
@@ -137,7 +148,7 @@ function AssetDetail({ asset: initialAsset, onClose, onEdit, canEdit, currentUse
               ['Category', <Badge text={asset.category} color={CAT_COLORS[asset.category] || '#64748b'} />],
               ['Type', <span style={{ fontSize: 13, color: '#6b7280', textTransform: 'capitalize' }}>{asset.type || '—'}</span>],
               ['Year / Make / Model', <span style={{ fontSize: 13, color: '#6b7280' }}>{[asset.year, asset.make, asset.model].filter(Boolean).join(' ') || '—'}</span>],
-              ['Condition', asset.condition ? <Badge text={asset.condition} color={CONDITION_COLORS[asset.condition] || '#64748b'} /> : <span style={{ color: '#d1d5db' }}>—</span>],
+              ['Condition', asset.condition ? <Badge text={normalizeCondition(asset.condition)} color={getConditionColor(asset.condition)} /> : <span style={{ color: '#d1d5db' }}>—</span>],
               ['Status', <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 500, color: STATUS_COLORS[asset.status || 'active'] }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: STATUS_COLORS[asset.status || 'active'], display: 'inline-block' }} />{(asset.status || 'active').toUpperCase()}</span>],
               ['Odometer / Hours', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#6b7280' }}>{asset.odometer || '—'}<span style={{ display: 'block', fontSize: 10, color: asset.odometer_date ? '#9ca3af' : '#d1d5db', marginTop: 2 }}>{asset.odometer_date ? `as of ${fmtDate(asset.odometer_date)}` : 'no date recorded'}</span></span>],
               ['Serial / VIN', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#6b7280' }}>{asset.vin || '—'}</span>],
@@ -435,15 +446,25 @@ export default function Assets() {
       // Capture what changed for audit
       const existing = assets.find(a => a.id === editId) || {};
       const changedFields = {};
-      ['name','status','condition','odometer','odometer_date','vin','comments','year','make','model','category','type','hour_meter_equipped','odometer_equipped','pm_manual_url'].forEach(k => {
+      ['id','name','status','condition','odometer','odometer_date','vin','comments','year','make','model','category','type','hour_meter_equipped','odometer_equipped','pm_manual_url'].forEach(k => {
         if ((form[k] || '') !== (existing[k] || '')) changedFields[k] = form[k] || '';
       });
-      const { error } = await supabase.from('assets').update(payload).eq('id', editId);
-      if (error) return show(error.message, 'error');
+
+      // If the ID changed, we need to delete and reinsert (ID is the PK)
+      if (form.id !== editId) {
+        const { error: delErr } = await supabase.from('assets').delete().eq('id', editId);
+        if (delErr) return show('Failed to rename asset: ' + delErr.message, 'error');
+        const { error: insErr } = await supabase.from('assets').insert(payload);
+        if (insErr) return show('Failed to save renamed asset: ' + insErr.message, 'error');
+      } else {
+        const { error } = await supabase.from('assets').update(payload).eq('id', editId);
+        if (error) return show(error.message, 'error');
+      }
       // Write audit entry
       if (Object.keys(changedFields).length > 0) {
+        const auditId = form.id; // use new ID in case it changed
         const fieldList = Object.keys(changedFields).join(', ');
-        await writeAudit(editId, 'asset_edit', null, profile?.full_name || 'Staff', `Asset updated: ${fieldList} changed`, changedFields);
+        await writeAudit(auditId, 'asset_edit', null, profile?.full_name || 'Staff', `Asset updated: ${fieldList} changed`, changedFields);
       }
       show('Asset updated');
     } else {
@@ -500,7 +521,7 @@ export default function Assets() {
                 <td style={{ padding: '12px 16px' }} onClick={() => setSelectedAsset(a)}><Badge text={a.category} color={CAT_COLORS[a.category] || '#64748b'} /></td>
                 <td style={{ padding: '12px 16px', color: '#6b7280', textTransform: 'capitalize' }} onClick={() => setSelectedAsset(a)}>{a.type}</td>
                 <td style={{ padding: '12px 16px', color: '#6b7280' }} onClick={() => setSelectedAsset(a)}>{[a.year, a.make, a.model].filter(Boolean).join(' · ') || '—'}</td>
-                <td style={{ padding: '12px 16px' }} onClick={() => setSelectedAsset(a)}>{a.condition ? <Badge text={a.condition} color={CONDITION_COLORS[a.condition] || '#64748b'} /> : <span style={{ color: '#d1d5db' }}>—</span>}</td>
+                <td style={{ padding: '12px 16px' }} onClick={() => setSelectedAsset(a)}>{a.condition ? <Badge text={normalizeCondition(a.condition)} color={getConditionColor(a.condition)} /> : <span style={{ color: '#d1d5db' }}>—</span>}</td>
                 <td style={{ padding: '12px 16px', color: '#6b7280' }} onClick={() => setSelectedAsset(a)}><div style={{ fontFamily: "'DM Mono',monospace", fontSize: 12 }}>{a.odometer || '—'}</div>{a.odometer_date && <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>as of {fmtDate(a.odometer_date)}</div>}</td>
                 <td style={{ padding: '12px 16px', color: '#6b7280', fontFamily: "'DM Mono',monospace", fontSize: 12 }} onClick={() => setSelectedAsset(a)}>{a.vin || '—'}</td>
                 <td style={{ padding: '12px 16px' }} onClick={() => setSelectedAsset(a)}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 500, color: STATUS_COLORS[a.status || 'active'] || '#16a34a' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: STATUS_COLORS[a.status || 'active'], display: 'inline-block' }} />{(a.status || 'active').toUpperCase()}</span></td>
@@ -516,7 +537,7 @@ export default function Assets() {
       {showForm && (
         <Modal title={editId ? 'Edit Asset' : 'Add New Asset'} onClose={() => setShowForm(false)}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <Field label="Asset ID *"><input style={inputStyle} value={form.id} onChange={e => setForm(p => ({ ...p, id: e.target.value }))} placeholder="e.g. FLV004" disabled={!!editId} /></Field>
+            <Field label="Asset ID *"><input style={inputStyle} value={form.id} onChange={e => setForm(p => ({ ...p, id: e.target.value }))} placeholder="e.g. FLV004" /></Field>
             <Field label="Name *"><input style={inputStyle} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></Field>
             <Field label="Category"><select style={selectStyle} value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}>{CATEGORIES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}</select></Field>
             <Field label="Type"><select style={selectStyle} value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}>{ASSET_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select></Field>

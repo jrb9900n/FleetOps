@@ -5,7 +5,7 @@ export const fmtDate = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('
 export const fmtCurrency = (n) => n != null ? `$${Number(n).toLocaleString('en-US',{minimumFractionDigits:2})}` : '—';
 export const today = () => new Date().toISOString().split('T')[0];
 
-export const CATEGORIES   = ['asphalt','concrete','landscape','general','fleet','safety'];
+export const CATEGORIES   = ['asphalt','concrete','landscape','general','fleet','safety','snow','rotating'];
 export const ASSET_TYPES  = ['Vehicle','Trailer','Vehicle Attachment','Heavy Equipment','Ride On Machine','Small Engine','Skid Attachment','Hand Tool','Landscape Tool','Other'];
 export const PM_INTERVALS = ['weekly','monthly','quarterly','semi-annual','annual','every 250hrs','every 500hrs','every 1000hrs','every 5000mi','every 10000mi'];
 export const CONDITIONS   = ['Excellent','Good','Fair','Poor','Out of Service'];
@@ -21,10 +21,11 @@ export const ROLE_LABELS = {
 export const CAT_COLORS = {
   asphalt:'#ea580c', concrete:'#64748b', landscape:'#16a34a',
   general:'#2563eb', fleet:'#7c3aed', safety:'#db2777',
+  snow:'#0ea5e9', rotating:'#f59e0b',
 };
 export const STATUS_COLORS = {
   active:'#16a34a', 'out of service':'#dc2626',
-  maintenance:'#d97706', retired:'#6b7280',
+  maintenance:'#d97706', 'in maintenance':'#d97706', retired:'#6b7280',
 };
 
 // SVG icon library

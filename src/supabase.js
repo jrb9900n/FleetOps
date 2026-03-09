@@ -24,7 +24,7 @@ export const ROLE_LABELS = {
 export const PERMISSIONS = {
   admin:          { dashboard:true,  assets:true,  log:true,  damage:true,  invoices:true,  history:true,  costs:true,  pm:true,  users:true  },
   operations:     { dashboard:true,  assets:true,  log:true,  damage:true,  invoices:true,  history:true,  costs:true,  pm:true,  users:false },
-  office_manager: { dashboard:true,  assets:false, log:false, damage:true,  invoices:true,  history:true,  costs:true,  pm:false, users:false },
+  office_manager: { dashboard:true,  assets:true,  log:false, damage:true,  invoices:true,  history:true,  costs:true,  pm:false, users:false },
   foreman:        { dashboard:true,  assets:false, log:true,  damage:true,  invoices:false, history:true,  costs:false, pm:true,  users:false },
   field_crew:     { dashboard:false, assets:false, log:true,  damage:true,  invoices:false, history:false, costs:false, pm:false, users:false },
 };
