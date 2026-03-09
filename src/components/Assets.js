@@ -488,9 +488,10 @@ export default function Assets() {
     if (!asset) return show('Asset not found', 'error');
     // Fetch audit trail snapshot
     const { data: auditRows } = await supabase.from('asset_audit').select('*').eq('asset_id', id).order('changed_at', { ascending: false });
-    // Insert into deleted_assets archive
+    // Insert into deleted_assets archive (strip updated_at — not in archive table schema)
+    const { updated_at, ...assetSnapshot } = asset;
     const { error: archiveErr } = await supabase.from('deleted_assets').insert({
-      ...asset,
+      ...assetSnapshot,
       deleted_by: profile?.full_name || 'Staff',
       deleted_at: new Date().toISOString(),
       audit_snapshot: auditRows || [],
