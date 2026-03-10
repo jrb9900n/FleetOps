@@ -454,12 +454,13 @@ export default function Assets() {
       // WITHOUT triggering cascade delete (avoids wiping logs, damage reports, etc.)
       if (form.id !== editId) {
         // Check new ID doesn't already exist
-        const { data: existing } = await supabase.from('assets').select('id').eq('id', form.id).single();
-        if (existing) return show(`Asset ID "${form.id}" already exists`, 'error');
+        const { data: existingCheck } = await supabase.from('assets').select('id').eq('id', form.id).maybeSingle();
+        if (existingCheck) return show(`Asset ID "${form.id}" already exists`, 'error');
         const { error: renameErr } = await supabase.rpc('rename_asset', { old_id: editId, new_id: form.id });
         if (renameErr) return show('Rename failed: ' + renameErr.message, 'error');
-        // Now update the remaining fields on the new ID
-        const { error: updateErr } = await supabase.from('assets').update(payload).eq('id', form.id);
+        // Update remaining fields — exclude id from payload since rename_asset already set it
+        const { id: _ignored, ...payloadWithoutId } = payload;
+        const { error: updateErr } = await supabase.from('assets').update(payloadWithoutId).eq('id', form.id);
         if (updateErr) return show(updateErr.message, 'error');
       } else {
         const { error } = await supabase.from('assets').update(payload).eq('id', editId);
