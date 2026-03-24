@@ -154,6 +154,11 @@ function AssetDetail({ asset: initialAsset, onClose, onEdit, canEdit, currentUse
               ['Serial / VIN', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#6b7280' }}>{asset.vin || '—'}</span>],
               ['Metering', <span style={{ fontSize: 12, color: '#6b7280' }}>{[asset.odometer_equipped && 'Odometer', asset.hour_meter_equipped && 'Hour Meter'].filter(Boolean).join(' + ') || 'None configured'}</span>],
               ['PM Manual', asset.pm_manual_url ? <a href={asset.pm_manual_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#2563eb', textDecoration: 'underline' }}>View Manual ↗</a> : <span style={{ fontSize: 12, color: '#d1d5db' }}>—</span>],
+              ...(['Vehicle','Trailer'].includes(asset.type) ? [
+                ['License Plate', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#6b7280' }}>{asset.license_plate || '—'}{asset.license_plate_exp && <span style={{ display: 'block', fontSize: 10, color: '#9ca3af', marginTop: 2 }}>Exp: {fmtDate(asset.license_plate_exp)}</span>}</span>],
+                ['DOT Inspection Exp', <span style={{ fontSize: 12, color: asset.dot_inspection_exp && new Date(asset.dot_inspection_exp) < new Date() ? '#dc2626' : '#6b7280' }}>{asset.dot_inspection_exp ? fmtDate(asset.dot_inspection_exp) : '—'}{asset.dot_inspection_exp && new Date(asset.dot_inspection_exp) < new Date() && <span style={{ display: 'block', fontSize: 10, color: '#dc2626', marginTop: 2 }}>EXPIRED</span>}</span>],
+                ['GVWR', asset.gvwr ? <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: '#6b7280' }}>{Number(asset.gvwr).toLocaleString()} lbs</span> : <span style={{ color: '#d1d5db' }}>—</span>],
+              ] : []),
             ].map(([label, value]) => (
               <div key={label}>
                 <div style={{ fontSize: 10.5, fontWeight: 600, color: '#9ca3af', letterSpacing: .5, textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
@@ -423,7 +428,7 @@ export default function Assets() {
   const [sortDir, setSortDir] = useState('asc');
   const [selectedAsset, setSelectedAsset] = useState(null);
   const { toast, show } = useToast();
-  const blank = { id: '', name: '', category: 'asphalt', type: 'Vehicle', year: '', make: '', model: '', status: 'active', condition: 'Good', odometer: '', odometer_date: '', vin: '', comments: '', hour_meter_equipped: false, odometer_equipped: false, pm_manual_url: '' };
+  const blank = { id: '', name: '', category: 'asphalt', type: 'Vehicle', year: '', make: '', model: '', status: 'active', condition: 'Good', odometer: '', odometer_date: '', vin: '', comments: '', hour_meter_equipped: false, odometer_equipped: false, pm_manual_url: '', license_plate: '', license_plate_exp: '', dot_inspection_exp: '', gvwr: '' };
   const [form, setForm] = useState(blank);
 
   useEffect(() => { load(); }, []);
@@ -434,19 +439,19 @@ export default function Assets() {
 
   const openNew = () => { setForm(blank); setEditId(null); setShowForm(true); };
   const openEdit = (a) => {
-    setForm({ ...blank, ...a, comments: a.comments || a.notes || '', odometer_date: a.odometer_date || '', vin: a.vin || '', hour_meter_equipped: a.hour_meter_equipped || false, odometer_equipped: a.odometer_equipped || false, pm_manual_url: a.pm_manual_url || '' });
+    setForm({ ...blank, ...a, comments: a.comments || a.notes || '', odometer_date: a.odometer_date || '', vin: a.vin || '', hour_meter_equipped: a.hour_meter_equipped || false, odometer_equipped: a.odometer_equipped || false, pm_manual_url: a.pm_manual_url || '', license_plate: a.license_plate || '', license_plate_exp: a.license_plate_exp || '', dot_inspection_exp: a.dot_inspection_exp || '', gvwr: a.gvwr || '' });
     setEditId(a.id); setShowForm(true); setSelectedAsset(null);
   };
 
   const save = async () => {
     if (!form.id || !form.name) return show('Asset ID and Name are required', 'error');
-    const payload = { id: form.id, name: form.name, category: form.category, type: form.type, year: form.year, make: form.make, model: form.model, status: form.status, condition: form.condition, odometer: form.odometer, odometer_date: form.odometer_date || null, vin: form.vin || null, comments: form.comments, hour_meter_equipped: form.hour_meter_equipped || false, odometer_equipped: form.odometer_equipped || false, pm_manual_url: form.pm_manual_url || null };
+    const payload = { id: form.id, name: form.name, category: form.category, type: form.type, year: form.year, make: form.make, model: form.model, status: form.status, condition: form.condition, odometer: form.odometer, odometer_date: form.odometer_date || null, vin: form.vin || null, comments: form.comments, hour_meter_equipped: form.hour_meter_equipped || false, odometer_equipped: form.odometer_equipped || false, pm_manual_url: form.pm_manual_url || null, license_plate: form.license_plate || null, license_plate_exp: form.license_plate_exp || null, dot_inspection_exp: form.dot_inspection_exp || null, gvwr: form.gvwr ? parseInt(form.gvwr, 10) || null : null };
 
     if (editId) {
       // Capture what changed for audit
       const existing = assets.find(a => a.id === editId) || {};
       const changedFields = {};
-      ['id','name','status','condition','odometer','odometer_date','vin','comments','year','make','model','category','type','hour_meter_equipped','odometer_equipped','pm_manual_url'].forEach(k => {
+      ['id','name','status','condition','odometer','odometer_date','vin','comments','year','make','model','category','type','hour_meter_equipped','odometer_equipped','pm_manual_url','license_plate','license_plate_exp','dot_inspection_exp','gvwr'].forEach(k => {
         if ((form[k] || '') !== (existing[k] || '')) changedFields[k] = form[k] || '';
       });
 
@@ -572,6 +577,12 @@ export default function Assets() {
             <Field label="Odometer / Engine Hours"><input style={inputStyle} value={form.odometer || ''} onChange={e => setForm(p => ({ ...p, odometer: e.target.value }))} placeholder="e.g. 45,200 mi or 1,340 hrs" /></Field>
             <Field label="Reading As-Of Date"><input type="date" style={inputStyle} value={form.odometer_date || ''} onChange={e => setForm(p => ({ ...p, odometer_date: e.target.value }))} /></Field>
             <Field label="Serial Number / VIN" fullWidth><input style={inputStyle} value={form.vin || ''} onChange={e => setForm(p => ({ ...p, vin: e.target.value }))} placeholder="e.g. 1FTZX1722XKA76091" /></Field>
+            {['Vehicle','Trailer'].includes(form.type) && <>
+              <Field label="License Plate"><input style={inputStyle} value={form.license_plate || ''} onChange={e => setForm(p => ({ ...p, license_plate: e.target.value }))} placeholder="e.g. ABC-1234" /></Field>
+              <Field label="License Plate Expiration"><input type="date" style={inputStyle} value={form.license_plate_exp || ''} onChange={e => setForm(p => ({ ...p, license_plate_exp: e.target.value }))} /></Field>
+              <Field label="Annual DOT Inspection Expiration"><input type="date" style={inputStyle} value={form.dot_inspection_exp || ''} onChange={e => setForm(p => ({ ...p, dot_inspection_exp: e.target.value }))} /></Field>
+              <Field label="GVWR (lbs)"><input type="number" style={inputStyle} value={form.gvwr || ''} onChange={e => setForm(p => ({ ...p, gvwr: e.target.value }))} placeholder="e.g. 26000" /></Field>
+            </>}
             <Field label="Comments" fullWidth><textarea style={{ ...inputStyle, height: 80, resize: 'vertical' }} value={form.comments || ''} onChange={e => setForm(p => ({ ...p, comments: e.target.value }))} placeholder="Known issues, notes, follow-up needed…" /></Field>
             <Field label="Equipment Metering" fullWidth>
               <div style={{ display: 'flex', gap: 20, alignItems: 'center', padding: '8px 0' }}>
