@@ -392,8 +392,29 @@ export function PMSchedules() {
   },[]);
 
   const load = async () => {
-    const { data } = await supabase.from('pm_schedules').select('*,assets(name)').order('next_due',{ascending:true});
-    setPms(data||[]); setLoading(false);
+    const [{ data: pmData }, { data: assetData }] = await Promise.all([
+      supabase.from('pm_schedules').select('*,assets(name)').order('next_due',{ascending:true}),
+      supabase.from('assets').select('id,name,type,license_plate,license_plate_exp,dot_inspection_exp').in('type',['Vehicle','Trailer']),
+    ]);
+    const realPms = pmData || [];
+    // Build virtual PM items for license plate and DOT inspection expirations
+    const virtualPms = [];
+    const today30 = new Date(); today30.setDate(today30.getDate()+30);
+    for (const a of (assetData||[])) {
+      if (a.license_plate_exp) {
+        const exp = new Date(a.license_plate_exp);
+        if (exp <= today30) {
+          virtualPms.push({ id:`_virtual_plate_${a.id}`, _virtual:true, asset_id:a.id, assets:{name:a.name}, task:`License Plate Renewal${a.license_plate?' ('+a.license_plate+')':''}`, interval:'annual', next_due:a.license_plate_exp, last_performed:null, notes:'Sourced from License Plate Expiration date on asset record.' });
+        }
+      }
+      if (a.dot_inspection_exp) {
+        const exp = new Date(a.dot_inspection_exp);
+        if (exp <= today30) {
+          virtualPms.push({ id:`_virtual_dot_${a.id}`, _virtual:true, asset_id:a.id, assets:{name:a.name}, task:'Annual DOT Inspection', interval:'annual', next_due:a.dot_inspection_exp, last_performed:null, notes:'Sourced from Annual DOT Inspection Expiration date on asset record.' });
+        }
+      }
+    }
+    setPms([...realPms, ...virtualPms]); setLoading(false);
   };
 
   const save = async () => {
@@ -445,7 +466,7 @@ export function PMSchedules() {
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
         <div>
           <h1 style={{fontSize:26,fontWeight:700,marginBottom:2}}>PM Schedules</h1>
-          <p style={{color:'#64748b',fontSize:14,margin:0}}>Preventive maintenance milestones · {pms.filter(p=>getStatus(p)==='overdue').length} overdue · {pms.filter(p=>getStatus(p)==='due_soon').length} due soon</p>
+          <p style={{color:'#64748b',fontSize:14,margin:0}}>Preventive maintenance milestones · {pms.filter(p=>getStatus(p)==='overdue').length} overdue · {pms.filter(p=>getStatus(p)==='due_soon').length} due soon{pms.some(p=>p._virtual)?' · includes license plate & DOT expiration alerts':''}</p>
         </div>
         {can('pm') && <Btn icon="plus" onClick={()=>setShowForm(true)}>Add PM Schedule</Btn>}
       </div>
@@ -467,6 +488,7 @@ export function PMSchedules() {
                     <span style={{fontWeight:600,fontSize:14}}>{p.task}</span>
                     <Badge text={meta.label} color={meta.color}/>
                     <Badge text={p.interval} color="#3b82f6"/>
+                    {p._virtual && <span style={{fontSize:10,fontWeight:600,color:'#7c3aed',background:'#ede9fe',borderRadius:4,padding:'2px 6px',letterSpacing:.4}}>AUTO</span>}
                   </div>
                   <div style={{fontSize:12,color:'#64748b'}}>{p.assets?.name}</div>
                   <div style={{display:'flex',gap:20,marginTop:6,fontSize:12,color:'#64748b'}}>
@@ -475,11 +497,14 @@ export function PMSchedules() {
                   </div>
                   {p.notes&&<div style={{fontSize:12,color:'#64748b',marginTop:4}}>{p.notes}</div>}
                 </div>
-                {can('pm') && (
+                {can('pm') && !p._virtual && (
                   <div style={{display:'flex',gap:6,flexShrink:0}}>
                     <GhostBtn onClick={()=>markDone(p)}>Mark Done</GhostBtn>
                     <IconBtn icon="trash" title="Remove" color="#ef4444" onClick={()=>remove(p.id)}/>
                   </div>
+                )}
+                {p._virtual && (
+                  <div style={{fontSize:11,color:'#7c3aed',flexShrink:0,textAlign:'right',lineHeight:1.4}}>Update on<br/>asset record</div>
                 )}
               </div>
             </div>
