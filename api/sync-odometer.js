@@ -1,9 +1,6 @@
 // api/sync-odometer.js
-// ------------------------------------------------------------
-// Vercel Serverless Function — FleetSharp → Supabase Odometer Sync
-// Called daily at 6:00 AM via Vercel cron (vercel.json)
-// Manual trigger: /api/sync-odometer?secret=YOUR_CRON_SECRET
-// ------------------------------------------------------------
+// FleetSharp -> Supabase Odometer Sync
+// Manual: /api/sync-odometer?secret=YOUR_CRON_SECRET
 
 const FLEETSHARP_API   = 'https://app02.fleetsharp.com/ibis/rest/api/v2';
 const FLEETSHARP_TOKEN = process.env.FLEETSHARP_API_TOKEN;
@@ -15,43 +12,25 @@ export default async function handler(req, res) {
   const authHeader = req.headers['authorization'];
   const isVercelCron = authHeader === `Bearer ${CRON_SECRET}`;
   const isManual = req.query.secret === CRON_SECRET;
+  if (!isVercelCron && !isManual) return res.status(401).json({ error: 'Unauthorized' });
 
-  if (!isVercelCron && !isManual) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  console.log('[odometer-sync] Starting sync at', new Date().toISOString());
-
-  const result = {
-    ranAt: new Date().toISOString(),
-    assetsMatched: 0,
-    assetsSkipped: 0,
-    readingsWritten: 0,
-    errors: [],
-  };
+  const result = { ranAt: new Date().toISOString(), assetsMatched: 0, assetsSkipped: 0, readingsWritten: 0, errors: [] };
 
   try {
-    // Step 1: Fetch all assets with VINs from Supabase
-    const assetsResp = await fetch(
-      `${SUPABASE_URL}/rest/v1/assets?select=id,name,vin&vin=not.is.null`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-        },
-      }
-    );
+    // Step 1: Assets with VINs from Supabase
+    const assetsResp = await fetch(`${SUPABASE_URL}/rest/v1/assets?select=id,name,vin&vin=not.is.null`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
     if (!assetsResp.ok) throw new Error(`Supabase assets fetch failed: ${assetsResp.status}`);
-
     const assets = await assetsResp.json();
-    console.log(`[odometer-sync] Found ${assets.length} assets with VINs`);
+    console.log(`[odometer-sync] ${assets.length} assets with VINs`);
 
     const vinMap = {};
     for (const asset of assets) {
       if (asset.vin) vinMap[asset.vin.toUpperCase().trim()] = asset;
     }
 
-    // Step 2: Fetch yesterday's trips from FleetSharp
+    // Step 2: Yesterday's trips from FleetSharp
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0);
@@ -62,50 +41,64 @@ export default async function handler(req, res) {
       startDate: yesterday.toISOString().split('T')[0],
       endDate: today.toISOString().split('T')[0],
     };
-
     console.log('[odometer-sync] Fetching FleetSharp trips for', datePayload);
 
     const tripsResp = await fetch(`${FLEETSHARP_API}/advancedTrips`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${FLEETSHARP_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { Authorization: `Bearer ${FLEETSHARP_TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(datePayload),
     });
-    if (!tripsResp.ok) throw new Error(`FleetSharp advancedTrips failed: ${tripsResp.status}`);
+    if (!tripsResp.ok) throw new Error(`FleetSharp failed: ${tripsResp.status}`);
 
     const tripsData = await tripsResp.json();
-    const devices = Array.isArray(tripsData)
-      ? tripsData
-      : tripsData.devices ?? tripsData.data ?? [];
+    console.log('[odometer-sync] FleetSharp raw response type:', typeof tripsData, 'isArray:', Array.isArray(tripsData));
+    console.log('[odometer-sync] FleetSharp top-level keys:', tripsData && typeof tripsData === 'object' ? Object.keys(tripsData).join(', ') : 'n/a');
+    console.log('[odometer-sync] FleetSharp preview:', JSON.stringify(tripsData).substring(0, 500));
 
-    console.log(`[odometer-sync] FleetSharp returned ${devices.length} devices`);
+    // Normalize: handle array, { devices: [...] }, { data: [...] }, { trips: [...] }, or single object
+    let devices = [];
+    if (Array.isArray(tripsData)) {
+      devices = tripsData;
+    } else if (tripsData && typeof tripsData === 'object') {
+      const keys = Object.keys(tripsData);
+      // Find first array value
+      const arrayKey = keys.find(k => Array.isArray(tripsData[k]));
+      if (arrayKey) {
+        devices = tripsData[arrayKey];
+        console.log(`[odometer-sync] Using array from key: ${arrayKey}, length: ${devices.length}`);
+      } else if (keys.length > 0) {
+        // Single device object — wrap it
+        devices = [tripsData];
+        console.log('[odometer-sync] Treating response as single device object');
+      }
+    }
 
-    // Step 3: Match by VIN and extract highest odometer
+    console.log(`[odometer-sync] ${devices.length} devices to process`);
+
+    // Step 3: Match by VIN and extract odometer
     const readingsToInsert = [];
 
     for (const device of devices) {
-      const vin = (device.vin || device.VIN || '').toUpperCase().trim();
+      const vin = (device.vin || device.VIN || device.vehicleVin || device.vehicle_vin || '').toUpperCase().trim();
       const deviceId = device.imei || device.uuid || device.serialNumber || device.id;
 
       if (!vin) { result.assetsSkipped++; continue; }
-
       const asset = vinMap[vin];
       if (!asset) {
-        console.log(`[odometer-sync] No FleetOps asset for VIN ${vin} — skipping`);
+        console.log(`[odometer-sync] No asset for VIN ${vin}`);
         result.assetsSkipped++;
         continue;
       }
 
-      const trips = device.trips ?? device.Trips ?? [];
+      // Extract highest odometer from trips array
+      const trips = device.trips ?? device.Trips ?? device.tripList ?? [];
       let maxOdometer = null;
       let latestTimestamp = null;
 
       for (const trip of trips) {
         const odo = parseFloat(
           trip.endOdometerMiles ?? trip.odometerEnd ?? trip.endOdometer ??
-          trip.odometer ?? trip.endMileage ?? null
+          trip.odometer ?? trip.endMileage ?? trip.mileage ?? null
         );
         const ts = trip.endTime ?? trip.endDate ?? trip.timestamp ?? null;
         if (!isNaN(odo) && odo > 0 && (maxOdometer === null || odo > maxOdometer)) {
@@ -114,18 +107,17 @@ export default async function handler(req, res) {
         }
       }
 
+      // Fallback to top-level device odometer
       if (maxOdometer === null) {
-        const topLevelOdo = parseFloat(
-          device.odometer ?? device.currentOdometer ?? device.odometerMiles ?? null
-        );
-        if (!isNaN(topLevelOdo) && topLevelOdo > 0) {
-          maxOdometer = topLevelOdo;
+        const topOdo = parseFloat(device.odometer ?? device.currentOdometer ?? device.odometerMiles ?? device.totalMiles ?? null);
+        if (!isNaN(topOdo) && topOdo > 0) {
+          maxOdometer = topOdo;
           latestTimestamp = device.lastUpdate ?? device.lastSeen ?? new Date().toISOString();
         }
       }
 
       if (maxOdometer === null) {
-        console.log(`[odometer-sync] No odometer data for ${asset.id} (VIN: ${vin})`);
+        console.log(`[odometer-sync] No odometer for ${asset.id} (VIN: ${vin}). Device keys: ${Object.keys(device).join(', ')}`);
         result.assetsSkipped++;
         continue;
       }
@@ -140,60 +132,32 @@ export default async function handler(req, res) {
       });
     }
 
-    // Step 4: Batch insert into Supabase
+    // Step 4: Insert into Supabase
     if (readingsToInsert.length > 0) {
       const insertResp = await fetch(`${SUPABASE_URL}/rest/v1/odometer_readings`, {
         method: 'POST',
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=minimal',
-        },
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
         body: JSON.stringify(readingsToInsert),
       });
-      if (!insertResp.ok) {
-        const errText = await insertResp.text();
-        throw new Error(`Supabase insert failed: ${insertResp.status} — ${errText}`);
-      }
+      if (!insertResp.ok) throw new Error(`Supabase insert failed: ${insertResp.status} — ${await insertResp.text()}`);
       result.readingsWritten = readingsToInsert.length;
-      console.log(`[odometer-sync] Wrote ${result.readingsWritten} readings`);
     }
 
-    // Step 5: Log the sync run
+    // Step 5: Log
     await fetch(`${SUPABASE_URL}/rest/v1/odometer_sync_log`, {
       method: 'POST',
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal',
-      },
-      body: JSON.stringify({
-        assets_synced: result.assetsMatched,
-        assets_skipped: result.assetsSkipped,
-        readings_written: result.readingsWritten,
-      }),
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ assets_synced: result.assetsMatched, assets_skipped: result.assetsSkipped, readings_written: result.readingsWritten }),
     });
 
     return res.status(200).json({ success: true, ...result });
 
   } catch (err) {
-    console.error('[odometer-sync] Fatal error:', err.message);
+    console.error('[odometer-sync] Error:', err.message);
     await fetch(`${SUPABASE_URL}/rest/v1/odometer_sync_log`, {
       method: 'POST',
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal',
-      },
-      body: JSON.stringify({
-        assets_synced: result.assetsMatched,
-        assets_skipped: result.assetsSkipped,
-        readings_written: result.readingsWritten,
-        error_message: err.message,
-      }),
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ assets_synced: result.assetsMatched, assets_skipped: result.assetsSkipped, readings_written: result.readingsWritten, error_message: err.message }),
     }).catch(() => {});
     return res.status(500).json({ success: false, error: err.message, ...result });
   }
