@@ -16,23 +16,42 @@ export default async function handler(req, res) {
   if (!isVercelCron && !isManual) return res.status(401).json({ error: 'Unauthorized' });
 
   // Diagnostic mode: return all FleetSharp VINs vs FleetOps VINs
-  if (req.query.diagnose === '1') {
-    const [trackersResp, assetsResp] = await Promise.all([
-      fetch(`${FLEETSHARP_API}/tracker`, { headers: { Authorization: `Bearer ${FLEETSHARP_TOKEN}` } }),
-      fetch(`${SUPABASE_URL}/rest/v1/assets?select=id,name,vin&vin=not.is.null`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    if (req.query.diagnose === '1') {
+    const [trackersResp, locationsResp, assetsResp] = await Promise.all([
+      fetch(\`\${FLEETSHARP_API}/tracker\`, { headers: { Authorization: \`Bearer \${FLEETSHARP_TOKEN}\` } }),
+      fetch(\`\${FLEETSHARP_API}/locations\`, { headers: { Authorization: \`Bearer \${FLEETSHARP_TOKEN}\` } }),
+      fetch(\`\${SUPABASE_URL}/rest/v1/assets?select=id,name,vin&vin=not.is.null\`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: \`Bearer \${SUPABASE_KEY}\` }
       })
     ]);
-    const [trackers, assets] = await Promise.all([trackersResp.json(), assetsResp.json()]);
+    const trackers = await trackersResp.json();
+    const locations = await locationsResp.json().catch(() => []);
+    const assets = await assetsResp.json();
     const vinMap = {};
     for (const a of assets) { if (a.vin) vinMap[a.vin.toUpperCase().trim()] = a.id; }
-    const report = (Array.isArray(trackers) ? trackers : trackers.trackers ?? trackers.data ?? [trackers]).map(t => ({
-      name: t.name || t.label || t.vehicleName,
-      vin: t.vin || t.VIN || t.vehicleVin,
-      imei: t.imei || t.uuid,
-      matched: !!(t.vin || t.VIN) && !!vinMap[(t.vin || t.VIN || '').toUpperCase().trim()],
-      fleetOpsId: vinMap[(t.vin || t.VIN || '').toUpperCase().trim()] || null,
-    }));
+    
+    // Build name map from locations
+    const nameByImei = {};
+    const locArr = Array.isArray(locations) ? locations : locations.locations ?? locations.data ?? [];
+    for (const loc of locArr) {
+      const imei = loc.imei || loc.deviceId;
+      if (imei) nameByImei[String(imei)] = loc.name || loc.vehicleName || loc.label || loc.deviceName;
+    }
+    
+    const trackerArr = Array.isArray(trackers) ? trackers : trackers.trackers ?? trackers.data ?? [];
+    const report = trackerArr.map(t => {
+      const imei = String(t.imei || t.uuid || '');
+      const vin = (t.vin || t.VIN || '').toUpperCase().trim();
+      const name = t.name || t.label || t.vehicleName || t.deviceName || nameByImei[imei] || null;
+      return {
+        name,
+        vin: vin || null,
+        imei,
+        matched: !!vin && !!vinMap[vin],
+        fleetOpsId: vinMap[vin] || null,
+        allFields: Object.keys(t).join(','),
+      };
+    });
     return res.status(200).json({ trackerCount: report.length, matched: report.filter(r=>r.matched).length, unmatched: report.filter(r=>!r.matched).length, report });
   }
 
@@ -105,7 +124,7 @@ export default async function handler(req, res) {
         headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
         body: JSON.stringify(readingsToInsert),
       });
-      if (!insertResp.ok) throw new Error(`Supabase insert failed: ${insertResp.status} — ${await insertResp.text()}`);
+      if (!insertResp.ok) throw new Error(`Supabase insert failed: ${insertResp.status} â ${await insertResp.text()}`);
       result.readingsWritten = readingsToInsert.length;
     }
 
