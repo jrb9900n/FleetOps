@@ -424,20 +424,34 @@ export function PMSchedules() {
     show('PM schedule added'); setForm(blank); setShowForm(false); load();
   };
 
+  // Calendar-cadence intervals only — mileage/hour/usage-based intervals ("Every 5,000 mi",
+  // "100hr", "Before Each Use") can't be projected to a date without a usage rate, so those
+  // fall through to the "unchanged" branch below rather than being silently mismapped.
+  const INTERVAL_DAYS = {
+    weekly: 7, monthly: 30, quarterly: 90, 'semi-annual': 180, annual: 365,
+    seasonal: 365, 'annual/pre-season': 365, 'annual/post-season': 365, 'annual/off-season': 365,
+    'monthly (during season)': 30, 'every 6 months': 180, 'daily/8hr': 1, 'daily/10hr': 1,
+  };
+
   const markDone = async (pm) => {
     const todayStr = today();
-    const intervalDays = { weekly:7,monthly:30,quarterly:90,'semi-annual':180,annual:365 };
+    const days = INTERVAL_DAYS[(pm.interval || '').trim().toLowerCase()];
     let nextDue = pm.next_due;
-    if (intervalDays[pm.interval]) {
-      const nd = new Date(); nd.setDate(nd.getDate()+intervalDays[pm.interval]);
+    let advanced = false;
+    if (days) {
+      const nd = new Date(); nd.setDate(nd.getDate() + days);
       nextDue = nd.toISOString().split('T')[0];
+      advanced = true;
     }
-    await supabase.from('pm_schedules').update({ last_performed:todayStr, next_due:nextDue }).eq('id',pm.id);
-    show('PM marked complete — next due date updated'); load();
+    const { error } = await supabase.from('pm_schedules').update({ last_performed: todayStr, next_due: nextDue }).eq('id', pm.id);
+    if (error) return show(error.message, 'error');
+    show(advanced ? 'PM marked complete — next due date updated' : 'PM marked complete — usage-based interval, update next due manually');
+    load();
   };
 
   const remove = async (id) => {
-    await supabase.from('pm_schedules').delete().eq('id',id);
+    const { error } = await supabase.from('pm_schedules').delete().eq('id',id);
+    if (error) return show(error.message, 'error');
     show('PM schedule removed'); load();
   };
 
