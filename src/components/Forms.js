@@ -159,12 +159,14 @@ export function ReportDamage() {
   };
 
   const resolve = async (id) => {
-    await supabase.from('damage_reports').update({status:'resolved', resolved_at:new Date().toISOString()}).eq('id',id);
+    const { error } = await supabase.from('damage_reports').update({status:'resolved', resolved_at:new Date().toISOString()}).eq('id',id);
+    if (error) return show(error.message, 'error');
     show('Report marked as resolved'); loadReports();
   };
 
   const reopen = async (id) => {
-    await supabase.from('damage_reports').update({status:'open', resolved_at:null}).eq('id',id);
+    const { error } = await supabase.from('damage_reports').update({status:'open', resolved_at:null}).eq('id',id);
+    if (error) return show(error.message, 'error');
     show('Report reopened'); loadReports();
   };
 
@@ -392,7 +394,8 @@ export function Invoices() {
 
   const remove = async (id) => {
     if (!window.confirm('Delete this invoice?')) return;
-    await supabase.from('invoices').delete().eq('id',id);
+    const { error } = await supabase.from('invoices').delete().eq('id',id);
+    if (error) return show(error.message, 'error');
     show('Invoice removed'); load();
   };
 

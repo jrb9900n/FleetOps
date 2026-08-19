@@ -89,7 +89,8 @@ export default function Users() {
 
   const updateRole = async (id, role) => {
     if (!isAdmin) return;
-    await supabase.from('profiles').update({ role }).eq('id', id);
+    const { error } = await supabase.from('profiles').update({ role }).eq('id', id);
+    if (error) return show(error.message, 'error');
     show('Role updated');
     load();
   };
